@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateUser(int userId, UserRequestDto userRequestDto) {
+    public UserResponseDto updateUser(int userId, UserRequestDto userRequestDto) {
         User selectedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new EntryNotFoundException("User Not found"));
 
@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService {
         selectedUser.setRole(userRequestDto.getRole());
 
         userRepository.save(selectedUser);
+        return toUserResponseDto(selectedUser);
     }
 
     @Override

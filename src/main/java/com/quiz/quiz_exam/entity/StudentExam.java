@@ -21,7 +21,7 @@ public class StudentExam {
     private int  studentExamId;
     @ManyToOne
     @JoinColumn(name = "student_id")
-    private User studentId;
+    private User student;
     @OneToMany(mappedBy = "studentExam")
     private List<StudentAnswer> studentAnswers;
 

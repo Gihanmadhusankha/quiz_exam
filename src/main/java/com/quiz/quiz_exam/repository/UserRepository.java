@@ -8,8 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User,Integer> {
-    @Query("SELECT u FROM User u " +
-            "WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    @Query(value ="SELECT * FROM user WHERE  user_name LIKE %?1% " , nativeQuery =true )
     Page<User> searchAllUsers(@Param("searchText") String searchText, Pageable pageable);
 }

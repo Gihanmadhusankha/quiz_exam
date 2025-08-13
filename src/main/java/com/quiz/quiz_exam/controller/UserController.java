@@ -38,9 +38,9 @@ public class UserController {
             @PathVariable("id") int userId,
             @RequestBody UserRequestDto userRequestDto
     ) {
-        userService.updateUser(userId, userRequestDto);
+        UserResponseDto updateUser= userService.updateUser(userId, userRequestDto);
         return ResponseEntity.ok(
-                new StandardResponseDto(200, "User updated", null)
+                new StandardResponseDto(200, "User updated", updateUser)
         );
     }
 
@@ -56,8 +56,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("id") int userId) {
+    public ResponseEntity<StandardResponseDto> deleteUser(@PathVariable("id") int userId) {
         userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
+        return  new ResponseEntity<>(
+                new StandardResponseDto(
+                        204,"user deleted",null
+                ),
+
+                HttpStatus.NO_CONTENT
+        );
     }
 }

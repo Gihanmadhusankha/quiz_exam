@@ -6,7 +6,7 @@ import com.quiz.quiz_exam.dto.responseDto.paginate.UserPaginateResponseDto;
 
 public interface UserService {
     public UserResponseDto createUser(UserRequestDto userRequestDto);
-    public void updateUser(int userId, UserRequestDto userRequestDto);
+    public UserResponseDto updateUser(int userId, UserRequestDto userRequestDto);
 
     public void deleteUser(int userId);
 
