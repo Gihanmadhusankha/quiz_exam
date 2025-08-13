@@ -16,20 +16,16 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int userId;
+    private Long userId;
     @Column(name = "user_name",nullable = false)
     private String name;
     @Column(name="user_email",nullable = false,unique = true)
     private String email;
     @Column(name = "user_password",nullable = false)
     private String password;
-    @Column(name="user_role")
+    @Enumerated(EnumType.STRING)
     private UserRole role;
-    @OneToMany(mappedBy = "teacher")
-    private List<Exam> exams;
 
-    @OneToMany(mappedBy = "student")
-    private List<StudentExam> studentExams;
 
 
 }

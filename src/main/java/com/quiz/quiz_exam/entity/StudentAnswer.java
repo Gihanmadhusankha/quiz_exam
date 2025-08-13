@@ -1,10 +1,9 @@
 package com.quiz.quiz_exam.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="student_answer")
@@ -12,10 +11,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class StudentAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int studentAnswerId;
+    private Long studentAnswerId;
 
     private boolean is_correct;
     private String selected_option;
@@ -25,7 +25,8 @@ public class StudentAnswer {
 
     @ManyToOne
     @JoinColumn(name = "question_id")
-    private Question questionId;
+    private Question question;
+
 
 
 }

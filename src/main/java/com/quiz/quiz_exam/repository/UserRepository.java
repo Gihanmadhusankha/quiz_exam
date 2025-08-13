@@ -7,7 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserRepository extends JpaRepository<User,Integer> {
-    @Query(value ="SELECT * FROM user WHERE  user_name LIKE %?1% " , nativeQuery =true )
-    Page<User> searchAllUsers(@Param("searchText") String searchText, Pageable pageable);
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User,Long> {
+
+
+    Optional<User> findByEmail(String email);
 }

@@ -4,7 +4,6 @@ import com.quiz.quiz_exam.enums.ExamStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,24 +17,23 @@ import java.util.List;
 public class Exam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    @Column(name="exam_id",nullable = false)
-    private String examId;
+    private Long examId;
+    private Long teacherId;
     @Column(name="title",nullable = false)
     private String title;
     @Column(name = "exam_date",nullable = false)
-    private LocalDateTime examDate;
+    private LocalDateTime date;
     @Column(name = "start_time",nullable = false)
     private LocalDateTime startTime;
     @Column(name = "end_time",nullable = false)
     private LocalDateTime endTime;
     @Column(name="status",nullable = false)
-    private ExamStatus status;
-    @ManyToOne
-    @JoinColumn(name="teacher_id")
-    private User teacher;
+    @Enumerated(EnumType.STRING)
+    private ExamStatus status=ExamStatus.DRAFT;
+
     @OneToMany(mappedBy = "exam")
     private List<Question> questions;
+
 
 
 }

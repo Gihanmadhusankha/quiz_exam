@@ -13,7 +13,7 @@ import lombok.*;
 public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int questionId;
+    private Long questionId;
     @Column(name="question_Text",nullable = false)
     private String questionText;
     @Column(name="options_A",nullable = false)
@@ -25,8 +25,11 @@ public class Question {
     @Column(name = "option_D",nullable = false)
     private String option_d;
     @Column(name="correct_Answer",nullable = false)
-    private String correct_option;
+    private String correctOption;
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
+
+
+
 }
