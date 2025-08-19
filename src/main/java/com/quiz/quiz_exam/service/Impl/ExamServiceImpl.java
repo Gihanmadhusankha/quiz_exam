@@ -1,82 +1,72 @@
 package com.quiz.quiz_exam.service.Impl;
 
-import com.quiz.quiz_exam.dto.requestDto.ExamRequestDto;
-import com.quiz.quiz_exam.dto.responseDto.ExamResponseDto;
-import com.quiz.quiz_exam.dto.responseDto.paginate.ExamPaginateResponseDto;
+import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.entity.Exam;
-import com.quiz.quiz_exam.exceptions.EntryNotFoundException;
+import com.quiz.quiz_exam.entity.Question;
+import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.repository.ExamRepository;
+import com.quiz.quiz_exam.repository.QuestionRepository;
 import com.quiz.quiz_exam.service.ExamService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
     private final ExamRepository examRepository;
-    @Override
-    public ExamResponseDto addExam(ExamRequestDto examRequestDto) {
-        Exam savedExam = examRepository.save(toExam(examRequestDto));
-        return toExamResponseDto(savedExam);
-    }
-
-    @Override
-    public ExamResponseDto updateExam(String examId, ExamRequestDto examRequestDto) {
-        Exam selectedExam = examRepository.findExam(examId)
-                .orElseThrow(() -> new EntryNotFoundException("Exam not found"));
-
-        selectedExam.setTitle(examRequestDto.getTitle());
-        selectedExam.setExamDate(examRequestDto.getExamDate());
-        selectedExam.setStartTime(examRequestDto.getStartTime());
-        selectedExam.setEndTime(examRequestDto.getEndTime());
-        selectedExam.setStatus(examRequestDto.getStatus());
-
-        examRepository.save(selectedExam);
-
-        return toExamResponseDto(selectedExam);
-    }
+    private final QuestionRepository questionRepository;
 
 
 
-    @Override
-    public ExamPaginateResponseDto findAll(int page, int size, String searchText) {
-        var resultPage = examRepository.searchAllExams(searchText, PageRequest.of(page, size));
-        return ExamPaginateResponseDto.builder()
-                .dataList(resultPage.getContent().stream()
-                        .map(this::toExamResponseDto)
-                        .collect(Collectors.toList()))
-
+    @Transactional
+    public ExamDtos.ExamResponse createExam(Long teacherId, ExamDtos.CreateExamRequest req) {
+        Exam exam = Exam.builder()
+                .teacherId(teacherId)
+                .title(req.title())
+                .date(req.date())
+                .startTime(req.startedTime())
+                .endTime(req.endTime())
+                .status(ExamStatus.DRAFT)
                 .build();
-    }
-    @Override
-    public void deleteExam(String examId) {
-        examRepository.findExam(examId)
-                .orElseThrow(() -> new EntryNotFoundException("Exam Not found"));
-        examRepository.deleteById(Integer.valueOf(examId));
+        exam = examRepository.save(exam);
+
+        if (req.questions() != null) {
+            for (var q : req.questions()) {
+                Question qu = Question.builder()
+                        .exam(exam)
+                        .questionText(q.questionText())
+                        .option_a(q.optionA()).option_b(q.optionB()).option_c(q.optionC()).option_d(q.optionD())
+                        .correctOption(q.correctOption())
+                        .build();
+                questionRepository.save(qu);
+            }
+        }
+        return toResponse(examRepository.findById(exam.getExamId()).orElseThrow());
     }
 
-    private Exam toExam(ExamRequestDto dto) {
-        return Exam.builder()
-                .examId(dto.getExamId())
-                .title(dto.getTitle())
-                .examDate(dto.getExamDate())
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .status(dto.getStatus())
-                .build();
+    public List<ExamDtos.ExamResponse> listPublished() {
+        return examRepository.findAll().stream()
+                .filter(e -> e.getStatus() == ExamStatus.PUBLISHED)
+                .map(this::toResponse).toList();
     }
 
-    private ExamResponseDto toExamResponseDto(Exam exam) {
-        return ExamResponseDto.builder()
-                .examId(exam.getExamId())
-                .title(exam.getTitle())
-                .examDate(exam.getExamDate())
-                .startTime(exam.getStartTime())
-                .endTime(exam.getEndTime())
-                .status(exam.getStatus())
-                .build();
+    public ExamDtos.ExamResponse publish(Long examId) {
+        Exam e = examRepository.findById(examId).orElseThrow();
+        e.setStatus(ExamStatus.PUBLISHED);
+        return toResponse(examRepository.save(e));
+    }
+
+    public ExamDtos.ExamResponse get(Long id) {
+        return toResponse(examRepository.findById(id).orElseThrow());
+    }
+
+    private ExamDtos.ExamResponse toResponse(Exam e) {
+        var qs = e.getQuestions().stream().map(q -> new ExamDtos.QuestionDto(
+                q.getQuestionId(), q.getQuestionText(), q.getOption_a(), q.getOption_b(), q.getOption_c(), q.getOption_d(), q.getCorrectOption()
+        )).toList();
+        return new ExamDtos.ExamResponse(e.getExamId(), e.getTitle(), e.getDate(), e.getStartTime(), e.getEndTime(), e.getStatus(), qs);
     }
 }
