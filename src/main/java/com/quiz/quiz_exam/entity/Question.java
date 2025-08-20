@@ -14,22 +14,26 @@ public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long questionId;
-    @Column(name="question_Text",nullable = false)
+
+    @Column(name="question_text", nullable = false)
     private String questionText;
-    @Column(name="options_A",nullable = false)
-    private String option_a;
-    @Column(name="options_B",nullable = false)
-    private String option_b;
-    @Column(name = "options_C",nullable = false)
-    private String option_c;
-    @Column(name = "option_D",nullable = false)
-    private String option_d;
-    @Column(name="correct_Answer",nullable = false)
+
+    @Column(name="options_a", nullable = false)
+    private String optionA;
+
+    @Column(name="options_b", nullable = false)
+    private String optionB;
+
+    @Column(name="options_c", nullable = false)
+    private String optionC;
+
+    @Column(name="options_d", nullable = false)
+    private String optionD;
+
+    @Column(name="correct_answer", nullable = false)
     private String correctOption;
+
     @ManyToOne
-    @JoinColumn(name = "exam_id")
+    @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
-
-
-
 }

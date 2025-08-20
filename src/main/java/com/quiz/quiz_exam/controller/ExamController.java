@@ -4,11 +4,12 @@ import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/exams")
@@ -18,8 +19,8 @@ public class ExamController {
     private final ExamService examService;
 
     //  Teacher creates exam
-    @PreAuthorize("hasRole('TEACHER')")
     @PostMapping("/create")
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<ExamDtos.ExamResponse> create(
             @RequestParam Long teacherId,
             @Valid @RequestBody ExamDtos.CreateExamRequest req) {
@@ -28,23 +29,30 @@ public class ExamController {
     //Teacher update the exams
     @PreAuthorize("hasRole('TEACHER')")
     @PutMapping("/update")
-    public ResponseEntity<ExamDtos.ExamResponse> update(
-            @RequestParam Long teacherId,
-            @Valid @RequestBody ExamDtos.CreateExamRequest req) {
-        return ResponseEntity.ok(examService.updateExam(teacherId, req));
+    public ExamDtos.ExamResponse updateExam(
+            @RequestParam Long examId,
+            @RequestBody ExamDtos.CreateExamRequest req) {
+        return examService.updateExam(examId, req);
     }
 
     //  Teacher lists own exams (Draft + Published)
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/teacher/{teacherId}")
-    public ResponseEntity<List<ExamDtos.ExamResponse>> listByTeacher(@PathVariable Long teacherId) {
-        return ResponseEntity.ok(examService.listByTeacherExam(teacherId));
+    public ResponseEntity<Page<ExamDtos.ExamResponse>> listTeacherExams(
+            @PathVariable Long teacherId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(examService.listByTeacherExam(teacherId, page, size, search));
     }
 
     //  List published exams (for students)
     @GetMapping("/published")
-    public ResponseEntity<List<ExamDtos.ExamResponse>> listPublished() {
-        return ResponseEntity.ok(examService.listPublished());
+    public ResponseEntity<Page<ExamDtos.ExamResponse>> listPublished(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(examService.listPublished(page, size, search));
     }
 
     //  Teacher publishes exam

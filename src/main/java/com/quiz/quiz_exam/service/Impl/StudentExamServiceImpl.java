@@ -1,5 +1,6 @@
 package com.quiz.quiz_exam.service.Impl;
 
+import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.dto.StudentDtos.*;
 import com.quiz.quiz_exam.entity.*;
 import com.quiz.quiz_exam.enums.StudentExamStatus;
@@ -7,6 +8,9 @@ import com.quiz.quiz_exam.repository.*;
 
 import com.quiz.quiz_exam.service.StudentExamService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,5 +89,37 @@ public class  StudentExamServiceImpl implements StudentExamService {
                 answers
         );
     }
+
+    @Override
+    public StudentExamResponse getStudentExam(Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findById(studentExamId)
+                .orElseThrow(() -> new RuntimeException("Student exam not found"));
+
+        List<StudentDtos.AnswerDto> answers = studentExam.getStudentAnswers().stream()
+                .map(sa -> new StudentDtos.AnswerDto(sa.getQuestion().getQuestionId(), sa.getSelected_option()))
+                .collect(Collectors.toList());
+
+        long correctCount = studentExam.getStudentAnswers().stream()
+                .filter(sa -> sa.getQuestion().getCorrectOption().equals(sa.getSelected_option()))
+                .count();
+
+        return new StudentDtos.StudentExamResponse(
+                studentExam.getStudentExamId(),
+                studentExam.getExam().getExamId(),
+                studentExam.getStatus(),
+                studentExam.getExam().getQuestions().size(),
+                (int) correctCount,
+                answers
+        );
+    }
+
+    @Override
+    public Page<StudentExamResponse> listStudentExams(Long studentId, int page, int size, String search) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        return studentExamRepository.findByStudentIdAndSearch(studentId, search, pageable)
+                .map(se -> getStudentExam(se.getStudentExamId()));
+    }
+
 
 }

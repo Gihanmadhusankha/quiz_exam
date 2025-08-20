@@ -33,7 +33,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 var jws = jwtUtil.parse(header.substring(7));
-                Claims claims = (Claims) jws;
+                Claims claims = (Claims) jws.getBody();
                 Long userId = Long.valueOf(claims.get("uid").toString());
                 User user = userRepository.findById(userId).orElse(null);
                 if (user != null) {
@@ -41,7 +41,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-            } catch (Exception ignored) { }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         filterChain.doFilter(request, response);
     }
