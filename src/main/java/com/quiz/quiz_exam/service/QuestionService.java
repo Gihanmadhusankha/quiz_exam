@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface QuestionService {
     QuestionDtos.QuestionResponse addQuestion(QuestionDtos.CreateQuestionRequest req);
+    void deleteQuestion(Long id);
+
     List<QuestionDtos.QuestionResponse> listByExam(Long examId);
 }

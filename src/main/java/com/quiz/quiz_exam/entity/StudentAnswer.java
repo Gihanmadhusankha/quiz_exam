@@ -3,8 +3,6 @@ package com.quiz.quiz_exam.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name="student_answer")
 @AllArgsConstructor

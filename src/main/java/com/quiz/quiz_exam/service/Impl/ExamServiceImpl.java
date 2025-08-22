@@ -1,6 +1,8 @@
 package com.quiz.quiz_exam.service.Impl;
 
+import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.dto.ExamDtos;
+import com.quiz.quiz_exam.dto.ExamMonitorDto;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.Question;
 import com.quiz.quiz_exam.entity.User;
@@ -62,7 +64,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     public void deleteExam(Long examId) {
-        Exam exam = examRepository.findById(examId).orElseThrow();
+        Exam exam = examRepository.findById(examId).orElseThrow(()-> new RuntimeException("Exam not found"));
         examRepository.delete(exam);
     }
     public Page<ExamDtos.ExamResponse> listPublished(int page, int size, String search) {
@@ -74,11 +76,24 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public Page<ExamDtos.ExamResponse> listByTeacherExam(Long teacherId, int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
-        return examRepository.findByTeacherIdAndSearch(teacherId, search, pageable)
-                .map(this::toResponse);
+        if (search == null || search.isBlank() || search.isEmpty() || search == ""){
+            return examRepository.findByTeacherId(teacherId, pageable)
+                    .map(this::toResponse);
+        }else{
+            return examRepository.findByTeacherIdAndSearch(teacherId, search, pageable)
+                    .map(this::toResponse);
+        }
     }
 
+    @Override
+    public ExamMonitorDto getExamMonitor(Long examId) {
+        return null;
+    }
 
+    @Override
+    public DashboardDto getDashboardStats() {
+        return null;
+    }
 
 
     public ExamDtos.ExamResponse publish(Long examId) {
@@ -96,8 +111,6 @@ public class ExamServiceImpl implements ExamService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found with id " + examId));
 
-
-
         if (exam.getStatus() == ExamStatus.PUBLISHED) {
             throw new IllegalStateException("Cannot update a published exam");
         }
@@ -107,8 +120,8 @@ public class ExamServiceImpl implements ExamService {
         exam.setStartTime(req.startedTime());
         exam.setEndTime(req.endTime());
 
-        // Remove old questions
-        questionRepository.deleteAll(exam.getQuestions());
+        // Clear old questions
+        exam.getQuestions().clear();
 
         // Add new questions
         if (req.questions() != null) {
@@ -122,7 +135,8 @@ public class ExamServiceImpl implements ExamService {
                         .optionD(q.optionD())
                         .correctOption(q.correctOption())
                         .build();
-                questionRepository.save(qu);
+
+                exam.getQuestions().add(qu);
             }
         }
 
@@ -130,9 +144,10 @@ public class ExamServiceImpl implements ExamService {
     }
 
 
+
     public List<Question>getQuestionByExamId(Long examId){
         return questionRepository.findByExam_ExamId(examId);
-}
+    }
     private ExamDtos.ExamResponse toResponse(Exam e) {
         var qs = e.getQuestions().stream().map(q -> new ExamDtos.QuestionDto(
                 q.getQuestionId(), q.getQuestionText(), q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD(), q.getCorrectOption()

@@ -2,9 +2,19 @@ package com.quiz.quiz_exam.dto;
 
 import com.quiz.quiz_exam.enums.StudentExamStatus;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
+@Builder
+
+@Data
 public class StudentDtos {
+
+
 
     // When student starts exam → status = PENDING
     public record StartExamRequest(
@@ -19,10 +29,11 @@ public class StudentDtos {
             @NotBlank String selectedOption
     ) { }
 
-    // When submitting all answers → status = ATTENDED
+    // When submitting one answer → status = ATTENDED
     public record SubmitAnswersRequest(
             @NotNull Long studentExamId,
-            List<AnswerDto> answers
+            @NotNull Long questionId,
+            @NotBlank String selectedOption
     ) { }
 
     // Response after submission
@@ -33,5 +44,6 @@ public class StudentDtos {
             int totalQuestions,
             int correctCount,
             List<AnswerDto> answers
-    ) { }
+
+    ) {}
 }

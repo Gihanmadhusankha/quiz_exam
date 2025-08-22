@@ -45,6 +45,21 @@ public class QuestionServiceImpl implements QuestionService {
                 saved.getCorrectOption()
         );
     }
+    public Question updateQuestion(Long id, QuestionDtos.CreateQuestionRequest req) {
+        Question q = questionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+        q.setQuestionText(req.questionText());
+        q.setOptionA(req.optionA());
+        q.setOptionB(req.optionB());
+        q.setOptionC(req.optionC());
+        q.setOptionD(req.optionD());
+        q.setCorrectOption(req.correctAnswer());
+        return questionRepository.save(q);
+    }
+
+    public void deleteQuestion(Long id) {
+        questionRepository.deleteById(id);
+    }
 
     @Override
     public List<QuestionDtos.QuestionResponse> listByExam(Long examId) {

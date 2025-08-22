@@ -1,6 +1,7 @@
 package com.quiz.quiz_exam.controller;
 
 import com.quiz.quiz_exam.dto.ExamDtos;
+import com.quiz.quiz_exam.dto.ExamMonitorDto;
 import com.quiz.quiz_exam.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -74,5 +75,10 @@ public class ExamController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         examService.deleteExam(id);
         return ResponseEntity.noContent().build();
+    }
+    //monitor exam
+    @GetMapping("/{examId}/monitor")
+    public ResponseEntity<ExamMonitorDto> monitorExam(@PathVariable Long examId) {
+        return ResponseEntity.ok(examService.getExamMonitor(examId));
     }
 }

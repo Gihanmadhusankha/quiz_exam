@@ -1,7 +1,30 @@
 package com.quiz.quiz_exam.repository;
 
+import com.quiz.quiz_exam.entity.Question;
 import com.quiz.quiz_exam.entity.StudentAnswer;
+import com.quiz.quiz_exam.entity.StudentExam;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 public interface StudentAnswerRepository extends JpaRepository<StudentAnswer,Long> {
+    @Query ("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId")
+    long countByStudentExamId(@Param("studentExamId") Long studentExamId);
+
+    @Query("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId AND sa.is_correct = true")
+    long countCorrectByStudentExamId(@Param("studentExamId") Long studentExamId);
+
+
+    @Query("SELECT sa FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId AND sa.question.questionId = :questionId")
+    Optional<StudentAnswer> findByStudentExamAndQuestion(@Param("studentExamId") Long studentExamId,
+                                                         @Param("questionId") Long questionId);
+
+
+
+
+    @Query("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam = :studentExam AND sa.is_correct = true")
+    long countCorrectAnswers(@Param("studentExam") StudentExam studentExam);
+
 }

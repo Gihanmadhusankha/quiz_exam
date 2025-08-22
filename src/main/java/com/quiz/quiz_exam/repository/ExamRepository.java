@@ -18,6 +18,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                                   @Param("search") String search,
                                   Pageable pageable);
 
+    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId")
+    Page<Exam> findByTeacherId(@Param("teacherId") Long teacherId,
+                               Pageable pageable);
+
     @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId AND e.title LIKE %:search%")
     Page<Exam> findByTeacherIdAndSearch(@Param("teacherId") Long teacherId,
                                         @Param("search") String search,
