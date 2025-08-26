@@ -47,11 +47,9 @@ public class ExamController {
 
     //  List published exams (for students)
     @GetMapping("/published")
-    public ResponseEntity<Page<ExamDtos.ExamResponse>> listPublished(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(examService.listPublished(page, size, search));
+    public ResponseEntity<Page<ExamDtos.ExamResponse>> listPublished(@RequestBody ExamDtos.TeacherExamList teacherExamList
+           ) {
+        return ResponseEntity.ok(examService.listPublished(teacherExamList ));
     }
 
 

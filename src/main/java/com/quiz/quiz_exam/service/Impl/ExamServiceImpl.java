@@ -68,9 +68,9 @@ public class ExamServiceImpl implements ExamService {
         Exam exam = examRepository.findById(examId).orElseThrow(()-> new RuntimeException("Exam not found"));
         examRepository.delete(exam);
     }
-    public Page<ExamDtos.ExamResponse> listPublished(int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
-        return examRepository.findPublishedExams(ExamStatus.PUBLISHED, search, pageable)
+    public Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList) {
+        Pageable pageable = PageRequest.of(teacherExamList.page(), teacherExamList.size());
+        return examRepository.findPublishedExams(ExamStatus.PUBLISHED, teacherExamList.search(), pageable)
                 .map(this::toResponse);
     }
 
