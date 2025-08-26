@@ -20,8 +20,13 @@ public class ResultDtos {
             String studentName,
             StudentExamStatus status,
             long totalQuestions,
-            long correctCount,
-            double percentage
+            long correctAnswers,
+            double percentage,
+            int obtainedPoints,
+            int totalPoints,
+            String grade ,
+            String passFail,
+            List<QuestionResult>question
     ) {}
 
     public record ExamResultsForTeacher(
@@ -32,10 +37,18 @@ public class ResultDtos {
             List<StudentResultRow> results
     ) {}
 
-    public record MonitorCounts(
-            Long examId,
-            long totalStudentExams,
-            long pendingCount,
-            long attendedCount
-    ) {}
+
+    public record QuestionResult(
+            Long questionId,
+            String tittle,
+            boolean correct,
+            String verdictText
+    ){}
+    public record ResultResponse(
+            String statusText,
+            String grade,
+            int points,
+            int totalPoints,
+            List<QuestionResult>questions
+    ){}
 }

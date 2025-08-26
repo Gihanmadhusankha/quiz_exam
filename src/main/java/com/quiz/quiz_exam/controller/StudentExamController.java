@@ -1,10 +1,12 @@
 package com.quiz.quiz_exam.controller;
 
 import com.quiz.quiz_exam.dto.ResultDtos;
+import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.dto.StudentDtos.*;
 
 import com.quiz.quiz_exam.service.StudentExamService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +43,14 @@ public class StudentExamController {
     public ResponseEntity<ResultDtos.StudentResultRow> getResult(
             @PathVariable Long studentExamId) {
         return ResponseEntity.ok(studentExamService.getStudentResult(studentExamId));
+    }
+    //List of student exams-Available ,pending
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/lists")
+    public ResponseEntity<Page<StudentExamList>> listStudentsExams( @RequestBody StudentRequestExamList studentRequestExamList
+           ) {
+
+        return ResponseEntity.ok(studentExamService.StudentExamLists(studentRequestExamList));
     }
 
 

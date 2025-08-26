@@ -7,14 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface StudentAnswerRepository extends JpaRepository<StudentAnswer,Long> {
-    @Query ("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId")
-    long countByStudentExamId(@Param("studentExamId") Long studentExamId);
-
-    @Query("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId AND sa.is_correct = true")
-    long countCorrectByStudentExamId(@Param("studentExamId") Long studentExamId);
 
 
     @Query("SELECT sa FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId AND sa.question.questionId = :questionId")
@@ -26,5 +22,8 @@ public interface StudentAnswerRepository extends JpaRepository<StudentAnswer,Lon
 
     @Query("SELECT COUNT(sa) FROM StudentAnswer sa WHERE sa.studentExam = :studentExam AND sa.is_correct = true")
     long countCorrectAnswers(@Param("studentExam") StudentExam studentExam);
+
+    @Query("SELECT sa FROM StudentAnswer sa WHERE sa.studentExam.studentExamId = :studentExamId")
+    List<StudentAnswer> findByStudentExamId(@Param("studentExamId") Long studentExamId);
 
 }

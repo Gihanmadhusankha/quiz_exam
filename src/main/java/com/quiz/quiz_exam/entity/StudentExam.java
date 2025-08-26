@@ -25,7 +25,8 @@ public class StudentExam {
     @OneToMany(mappedBy = "studentExam")
     private List<StudentAnswer> studentAnswers;
 
-    @Column(name="status")
+    @Enumerated(EnumType.STRING)
+    @Column(name="status",nullable = false,length=20)
     private StudentExamStatus status=StudentExamStatus.PENDING;
 
     @ManyToOne

@@ -1,8 +1,9 @@
 package com.quiz.quiz_exam.controller;
 
 import com.quiz.quiz_exam.dto.ExamDtos;
-import com.quiz.quiz_exam.dto.ExamMonitorDto;
+import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.service.ExamService;
+import com.quiz.quiz_exam.service.StudentExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class ExamController {
 
     private final ExamService examService;
+    private final StudentExamService studentExamService;
 
     //  Teacher creates exam
     @PostMapping("/create")
@@ -38,13 +40,9 @@ public class ExamController {
 
     //  Teacher lists own exams (Draft + Published)
     @PreAuthorize("hasRole('TEACHER')")
-    @GetMapping("/teacher/{teacherId}")
-    public ResponseEntity<Page<ExamDtos.ExamResponse>> listTeacherExams(
-            @PathVariable Long teacherId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(examService.listByTeacherExam(teacherId, page, size, search));
+    @GetMapping("/teacher")
+    public ResponseEntity<Page<ExamDtos.ExamResponse>> listTeacherExams(@RequestBody ExamDtos.TeacherExamList teacherExamList) {
+        return ResponseEntity.ok(examService.listByTeacherExam( teacherExamList ));
     }
 
     //  List published exams (for students)
@@ -55,6 +53,8 @@ public class ExamController {
             @RequestParam(required = false) String search) {
         return ResponseEntity.ok(examService.listPublished(page, size, search));
     }
+
+
 
     //  Teacher publishes exam
     @PreAuthorize("hasRole('TEACHER')")
@@ -76,9 +76,5 @@ public class ExamController {
         examService.deleteExam(id);
         return ResponseEntity.noContent().build();
     }
-    //monitor exam
-    @GetMapping("/{examId}/monitor")
-    public ResponseEntity<ExamMonitorDto> monitorExam(@PathVariable Long examId) {
-        return ResponseEntity.ok(examService.getExamMonitor(examId));
-    }
+
 }

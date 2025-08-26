@@ -1,5 +1,6 @@
 package com.quiz.quiz_exam.service.Impl;
 
+import com.quiz.quiz_exam.dto.ExamMonitorDto;
 import com.quiz.quiz_exam.dto.ResultDtos;
 import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.*;
@@ -8,12 +9,21 @@ import com.quiz.quiz_exam.repository.*;
 import com.quiz.quiz_exam.service.StudentExamService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +50,7 @@ public class StudentExamServiceImpl implements StudentExamService {
         StudentExam se = new StudentExam();
         se.setExam(exam);
         se.setStudent(student);
-        se.setStatus(StudentExamStatus.PENDING);
+        se.setStatus(StudentExamStatus.ATTENDED);
         se = studentExamRepository.save(se);
 
         // Response DTO
@@ -60,7 +70,7 @@ public class StudentExamServiceImpl implements StudentExamService {
         StudentExam se = studentExamRepository.findById(request.studentExamId())
                 .orElseThrow(() -> new RuntimeException("Student exam not found"));
 
-        if (se.getStatus() == StudentExamStatus.ATTENDED) {
+        if (se.getStatus() == StudentExamStatus.COMPLETED) {
             throw new RuntimeException("Exam already completed");
         }
 
@@ -85,17 +95,24 @@ public class StudentExamServiceImpl implements StudentExamService {
 
         return new StudentDtos.AnswerDto(saved.getQuestion().getQuestionId(), saved.getSelected_option());
     }
-
+  //student complete the exam
 
     public ResultDtos.StudentExamSummary finishExam(Long studentExamId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
                 .orElseThrow(() -> new RuntimeException("StudentExam not found"));
 
+
+
         long totalQuestions = se.getExam().getQuestions().size();
+        long answeredQuestion =se.getStudentAnswers().size();
+
+        if(answeredQuestion<totalQuestions){
+            throw new RuntimeException("student has not answered all questions");
+        }
         long correctCount = studentAnswerRepository.countCorrectAnswers(se);
         double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
 
-        se.setStatus(StudentExamStatus.ATTENDED);
+        se.setStatus(StudentExamStatus.COMPLETED);
         studentExamRepository.save(se);
 
         return new ResultDtos.StudentExamSummary(
@@ -109,13 +126,51 @@ public class StudentExamServiceImpl implements StudentExamService {
     }
 
     //  Get Student Result
+    @Override
     public ResultDtos.StudentResultRow getStudentResult(Long studentExamId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
-                .orElseThrow(() -> new RuntimeException("StudentExam not found"));
+                .orElseThrow(() -> new RuntimeException("StudentExamId not found"));
 
-        long totalQuestions = se.getExam().getQuestions().size();
-        long correctCount = studentAnswerRepository.countCorrectAnswers(se);
+        // All questions of this exam
+        List<Question> questions = se.getExam().getQuestions();
+        int totalQuestions = questions.size();
+
+        // Fetch all answers
+        List<StudentAnswer> answers = studentAnswerRepository.findByStudentExamId(se.getStudentExamId());
+        Map<Long, StudentAnswer> answerMap = answers.stream()
+                .collect(Collectors.toMap(a -> a.getQuestion().getQuestionId(), a -> a));
+
+        long correctCount = 0;
+        List<ResultDtos.QuestionResult> questionResults = new ArrayList<>();
+
+        for (Question q : questions) {
+            StudentAnswer ans = answerMap.get(q.getQuestionId());
+
+            boolean correct = false;
+            if (ans != null) {
+                // Compare student's selected answer with correct option
+                correct = q.getCorrectOption().equalsIgnoreCase(ans.getSelected_option());
+            }
+
+            if (correct) {
+                correctCount++;
+            }
+
+            questionResults.add(new ResultDtos.QuestionResult(
+                    q.getQuestionId(),
+                    q.getQuestionText(),
+                    correct,
+                    correct ? "Correct" : "Wrong"
+            ));
+        }
+
+        // Scale to 100 points
         double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
+        int obtainedPoints = (int) Math.round(percentage);
+        int totalPoints = 100; // always 100
+
+        String grade = gradeFor(percentage);
+        String passFail = percentage >= 60 ? "Passed" : "Failed";
 
         return new ResultDtos.StudentResultRow(
                 se.getStudentExamId(),
@@ -124,47 +179,67 @@ public class StudentExamServiceImpl implements StudentExamService {
                 se.getStatus(),
                 totalQuestions,
                 correctCount,
-                percentage
+                percentage,
+                obtainedPoints,
+                totalPoints,
+                grade,
+                passFail,
+                questionResults
         );
     }
 
-    // ✅ Get Results for Teacher
-    public ResultDtos.ExamResultsForTeacher getExamResultsForTeacher(Long examId) {
-        List<StudentExam> studentExams = studentExamRepository.findByExam_ExamId(examId);
+    @Override
+    public Page<StudentDtos.StudentExamList> StudentExamLists(StudentDtos.StudentRequestExamList studentRequestExamList) {
+        Pageable pageable =PageRequest.of(studentRequestExamList.page(), studentRequestExamList.size());
 
-        long attendedCount = studentExams.stream()
-                .filter(se -> se.getStatus() == StudentExamStatus.ATTENDED)
-                .count();
+        Page<StudentExam> exams;
 
-        long totalStudentExams = studentExams.size();
+            if (studentRequestExamList.search()== null || studentRequestExamList.search().isBlank()) {
+                exams = studentExamRepository.findByStudent_Id(studentRequestExamList.studentId(), pageable);
+            } else {
+                exams = studentExamRepository.findByStudentIdAndSearch(studentRequestExamList.studentId(), studentRequestExamList.search(), pageable);
+            }
 
-        List<ResultDtos.StudentResultRow> results = studentExams.stream().map(se -> {
-            long totalQuestions = se.getExam().getQuestions().size();
-            long correctCount = studentAnswerRepository.countCorrectAnswers(se);
-            double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
+            return exams.map(this::toStudentResponse);
+        }
 
-            return new ResultDtos.StudentResultRow(
-                    se.getStudentExamId(),
-                    se.getStudent().getUserId(),
-                    se.getStudent().getName(),
-                    se.getStatus(),
-                    totalQuestions,
-                    correctCount,
-                    percentage
-            );
-        }).collect(Collectors.toList());
 
-        double averageScore = results.stream()
-                .mapToDouble(ResultDtos.StudentResultRow::percentage)
-                .average()
-                .orElse(0.0);
 
-        return new ResultDtos.ExamResultsForTeacher(
-                examId,
-                attendedCount,
-                totalStudentExams,
-                averageScore,
-                results
+    private String gradeFor(double pct) {
+        if (pct >= 90) return "A";
+        if (pct >= 80) return "B";
+        if (pct >= 70) return "C";
+        if (pct >= 60) return "D";
+        return "F";
+    }
+
+
+
+
+    @Override
+    public List<StudentDtos.StudentInfo> getAttendingStudents(Long examId) {
+        return studentExamRepository.findAllByExamId(examId).stream()
+                .map(se -> new StudentDtos.StudentInfo(
+                        se.getStudent().getUserId(),
+                        se.getStudent().getName(),
+                        se.getStatus().toString()))
+                .toList();
+    }
+
+
+    private StudentDtos.StudentExamList toStudentResponse(StudentExam se) {
+        Exam e = se.getExam();
+        long durationMinutes = Duration.between(e.getStartTime(), e.getEndTime()).toMinutes();
+
+        return new StudentDtos.StudentExamList(
+                e.getTitle(),
+                e.getStartTime(),
+                durationMinutes,
+                e.getStatus()
         );
     }
+
+
+
+
 }

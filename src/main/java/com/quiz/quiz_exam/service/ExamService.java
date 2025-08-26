@@ -2,7 +2,7 @@ package com.quiz.quiz_exam.service;
 
 import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.dto.ExamDtos;
-import com.quiz.quiz_exam.dto.ExamMonitorDto;
+import com.quiz.quiz_exam.dto.StudentDtos;
 import org.springframework.data.domain.Page;
 
 public interface ExamService {
@@ -12,9 +12,10 @@ public interface ExamService {
     ExamDtos.ExamResponse get(Long id);
     ExamDtos.ExamResponse updateExam(Long examId,ExamDtos.CreateExamRequest req);
     void deleteExam(Long examId);
-    Page<ExamDtos.ExamResponse> listByTeacherExam(Long teacherId, int page, int size, String search);
+    Page<ExamDtos.ExamResponse> listByTeacherExam(ExamDtos.TeacherExamList teacherExamList);
 
-    ExamMonitorDto getExamMonitor(Long examId);
-    DashboardDto getDashboardStats();
+
+
+
 }
 

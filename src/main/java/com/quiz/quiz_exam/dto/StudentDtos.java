@@ -1,12 +1,13 @@
 package com.quiz.quiz_exam.dto;
 
+import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.enums.StudentExamStatus;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -27,6 +28,8 @@ public class StudentDtos {
     public record AnswerDto(
             @NotNull Long questionId,
             @NotBlank String selectedOption
+
+
     ) { }
 
     // When submitting one answer → status = ATTENDED
@@ -46,4 +49,33 @@ public class StudentDtos {
             List<AnswerDto> answers
 
     ) {}
+    public record StudentInfo(
+            Long id,
+            String name,
+            String status
+
+
+    ){}
+
+    public record StudentStatusRecord(
+            String studentName,
+            String status //PENDING,ATTENDED,COMPLETED
+
+    ) {
+    }
+    public record StudentExamList(
+            String title,
+            LocalDateTime StartTime,
+            long ExamDuration,
+            ExamStatus status
+
+
+
+    ){}
+    public record StudentRequestExamList(
+            long studentId,
+            int page,
+            int size,
+            String search
+    ){}
 }

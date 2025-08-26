@@ -2,10 +2,9 @@ package com.quiz.quiz_exam.service.Impl;
 
 import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.dto.ExamDtos;
-import com.quiz.quiz_exam.dto.ExamMonitorDto;
+import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.Question;
-import com.quiz.quiz_exam.entity.User;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.QuestionRepository;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +27,7 @@ import java.util.List;
 public class ExamServiceImpl implements ExamService {
     private final ExamRepository examRepository;
     private final QuestionRepository questionRepository;
+
 
 
     @Transactional
@@ -74,26 +75,21 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public Page<ExamDtos.ExamResponse> listByTeacherExam(Long teacherId, int page, int size, String search) {
-        Pageable pageable = PageRequest.of(page, size);
-        if (search == null || search.isBlank() || search.isEmpty() || search == ""){
-            return examRepository.findByTeacherId(teacherId, pageable)
+    public Page<ExamDtos.ExamResponse> listByTeacherExam(ExamDtos.TeacherExamList teacherExamList) {
+        Pageable pageable = PageRequest.of(teacherExamList.page(), teacherExamList.size());
+        if (teacherExamList.search() == null || teacherExamList.search().isBlank() || teacherExamList.search().isEmpty()){
+            return examRepository.findByTeacherId(teacherExamList.teacherId(), pageable)
                     .map(this::toResponse);
         }else{
-            return examRepository.findByTeacherIdAndSearch(teacherId, search, pageable)
+            return examRepository.findByTeacherIdAndSearch(teacherExamList.teacherId(), teacherExamList.search(), pageable)
                     .map(this::toResponse);
         }
     }
 
-    @Override
-    public ExamMonitorDto getExamMonitor(Long examId) {
-        return null;
-    }
 
-    @Override
-    public DashboardDto getDashboardStats() {
-        return null;
-    }
+
+
+
 
 
     public ExamDtos.ExamResponse publish(Long examId) {
@@ -120,7 +116,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setStartTime(req.startedTime());
         exam.setEndTime(req.endTime());
 
-        // Clear old questions
+        // Clear old quest
         exam.getQuestions().clear();
 
         // Add new questions
@@ -145,13 +141,12 @@ public class ExamServiceImpl implements ExamService {
 
 
 
-    public List<Question>getQuestionByExamId(Long examId){
-        return questionRepository.findByExam_ExamId(examId);
-    }
+
     private ExamDtos.ExamResponse toResponse(Exam e) {
         var qs = e.getQuestions().stream().map(q -> new ExamDtos.QuestionDto(
                 q.getQuestionId(), q.getQuestionText(), q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD(), q.getCorrectOption()
         )).toList();
         return new ExamDtos.ExamResponse(e.getExamId(), e.getTitle(), e.getDate(), e.getStartTime(), e.getEndTime(), e.getStatus(), qs);
     }
+
 }
