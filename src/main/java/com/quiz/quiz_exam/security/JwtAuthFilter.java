@@ -34,10 +34,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 var jws = jwtUtil.parse(header.substring(7));
                 Claims claims = (Claims) jws.getBody();
+                //extract the userId  from token claims
                 Long userId = Long.valueOf(claims.get("uid").toString());
                 User user = userRepository.findById(userId).orElse(null);
                 if (user != null) {
-                    var auth = new UsernamePasswordAuthenticationToken(user.getEmail(), null,
+                    var auth = new UsernamePasswordAuthenticationToken(user, null,
                             List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
@@ -48,3 +49,4 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+

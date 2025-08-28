@@ -3,15 +3,14 @@ package com.quiz.quiz_exam.entity;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.aspectj.weaver.patterns.TypePatternQuestions;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@
-        Table(name="exam")
+@Table(name="exam")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -23,6 +22,10 @@ public class Exam {
     private Long examId;
 
     private Long teacherId;
+
+    @Column(name="last_updated")
+    private LocalDateTime lastUpdated;
+
 
     @Column(name="title", nullable = false)
     private String title;
@@ -42,5 +45,11 @@ public class Exam {
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    public void setTimestamps() {
+        this.lastUpdated = LocalDateTime.now();
+    }
 
 }

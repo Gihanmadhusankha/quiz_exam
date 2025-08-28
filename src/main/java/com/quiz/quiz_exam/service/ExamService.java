@@ -6,12 +6,12 @@ import com.quiz.quiz_exam.dto.StudentDtos;
 import org.springframework.data.domain.Page;
 
 public interface ExamService {
-    ExamDtos.ExamResponse createExam(Long teacherId, ExamDtos.CreateExamRequest req);
+
     Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList);
     ExamDtos.ExamResponse publish(Long examId);
     ExamDtos.ExamResponse get(Long id);
-    ExamDtos.ExamResponse updateExam(Long examId,ExamDtos.CreateExamRequest req);
-    void deleteExam(Long examId);
+
+    ExamDtos.ExamResponse saveUpdateDeleteExam(Long teacherId, ExamDtos.CreateExamRequest req );
     Page<ExamDtos.ExamResponse> listByTeacherExam(ExamDtos.TeacherExamList teacherExamList);
 
 

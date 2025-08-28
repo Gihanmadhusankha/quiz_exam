@@ -4,6 +4,8 @@ import com.quiz.quiz_exam.dto.ExamMonitorDto;
 import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.StudentExam;
+import com.quiz.quiz_exam.enums.ExamStatus;
+import com.quiz.quiz_exam.exception.EntryNotfoundException;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.StudentExamRepository;
 import com.quiz.quiz_exam.service.ExamMonitorService;
@@ -24,7 +26,7 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
     @Override
     public ExamMonitorDto getExamMonitorData(Long examId) {
         Exam exam =examRepository.findById(examId)
-                .orElseThrow(()-> new RuntimeException("Exam not found"));
+                .orElseThrow(()-> new EntryNotfoundException("Exam not found"));
         long completeCount=studentExamRepository.countCompleted(examId);
         List<StudentExam> studentExams = studentExamRepository.findAllByExamId(examId);
 
@@ -58,10 +60,7 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
         return dto;
     }
 
-
-
-
-   /* @Override
+    @Override
     public void endExam(Long examId) {
 
             Exam exam=examRepository .findById(examId)
@@ -71,5 +70,5 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
             examRepository.save(exam);
         }
 
-*/
+
 }

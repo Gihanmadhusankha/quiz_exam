@@ -6,8 +6,5 @@ import java.util.List;
 import java.util.Map;
 
 public interface ExamDashboardService {
-    List<DashboardDto.ProgressOverTime> getExamResultsOverTime(Long teacherId);
-    List<DashboardDto.GradeDistribution>getGradeDistribution(Long teacherId);
-    List<DashboardDto.studentAverage> getTopStudents(Long teacherId, int limit);
-    List<DashboardDto.studentAverage> getLowStudents(Long teacherId, int limit);
+    DashboardDto.DashboardResponse getDashboard(Long teacherId);
 }

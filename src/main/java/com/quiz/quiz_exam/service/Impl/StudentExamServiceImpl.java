@@ -5,6 +5,7 @@ import com.quiz.quiz_exam.dto.ResultDtos;
 import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.*;
 import com.quiz.quiz_exam.enums.StudentExamStatus;
+import com.quiz.quiz_exam.exception.EntryNotfoundException;
 import com.quiz.quiz_exam.repository.*;
 import com.quiz.quiz_exam.service.StudentExamService;
 import jakarta.transaction.Transactional;
@@ -40,11 +41,11 @@ public class StudentExamServiceImpl implements StudentExamService {
     public StudentDtos.StudentExamResponse startExam(StudentDtos.StartExamRequest startExamRequest) {
         // Get Exam
         Exam exam = examRepository.findById(startExamRequest.examId())
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
+                .orElseThrow(() -> new EntryNotfoundException("Exam not found"));
 
         // Get Student (User)
         User student = userRepository.findById(startExamRequest.studentId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new EntryNotfoundException("Student not found"));
 
         // Create StudentExam
         StudentExam se = new StudentExam();
@@ -68,14 +69,14 @@ public class StudentExamServiceImpl implements StudentExamService {
     // Submit a single answer
     public StudentDtos.AnswerDto submitAnswer(StudentDtos.SubmitAnswersRequest request) {
         StudentExam se = studentExamRepository.findById(request.studentExamId())
-                .orElseThrow(() -> new RuntimeException("Student exam not found"));
+                .orElseThrow(() -> new EntryNotfoundException("Student exam not found"));
 
         if (se.getStatus() == StudentExamStatus.COMPLETED) {
-            throw new RuntimeException("Exam already completed");
+            throw new EntryNotfoundException("Exam already completed");
         }
 
         Question question = questionRepository.findById(request.questionId())
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new EntryNotfoundException("Question not found"));
 
         Optional<StudentAnswer> existing = studentAnswerRepository
                 .findByStudentExamAndQuestion(request.studentExamId(), request.questionId());
@@ -99,7 +100,7 @@ public class StudentExamServiceImpl implements StudentExamService {
 
     public ResultDtos.StudentExamSummary finishExam(Long studentExamId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
-                .orElseThrow(() -> new RuntimeException("StudentExam not found"));
+                .orElseThrow(() -> new EntryNotfoundException("StudentExam not found"));
 
 
 
@@ -107,7 +108,7 @@ public class StudentExamServiceImpl implements StudentExamService {
         long answeredQuestion =se.getStudentAnswers().size();
 
         if(answeredQuestion<totalQuestions){
-            throw new RuntimeException("student has not answered all questions");
+            throw new EntryNotfoundException("student has not answered all questions");
         }
         long correctCount = studentAnswerRepository.countCorrectAnswers(se);
         double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
@@ -129,7 +130,7 @@ public class StudentExamServiceImpl implements StudentExamService {
     @Override
     public ResultDtos.StudentResultRow getStudentResult(Long studentExamId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
-                .orElseThrow(() -> new RuntimeException("StudentExamId not found"));
+                .orElseThrow(() -> new EntryNotfoundException("StudentExamId not found"));
 
         // All questions of this exam
         List<Question> questions = se.getExam().getQuestions();

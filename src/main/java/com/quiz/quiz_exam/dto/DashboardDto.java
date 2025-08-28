@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Getter
 @Setter
 
@@ -33,6 +35,11 @@ public class DashboardDto {
     ) {
 
     }
-
+    public record DashboardResponse(
+            List<ProgressOverTime> progressOverTime,
+            List<GradeDistribution> gradeDistribution,
+            List<studentAverage> topStudents,
+            List<studentAverage> lowStudents
+    ) {}
 
 }

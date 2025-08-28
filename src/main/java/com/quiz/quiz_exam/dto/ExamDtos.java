@@ -7,8 +7,8 @@ import java.util.List;
 
 public class ExamDtos {
     public record QuestionDto(Long questionId, String questionText, String optionA, String optionB, String optionC, String optionD, String correctOption) { }
-    public record CreateExamRequest(@NotBlank String title, @NotNull LocalDateTime date, @NotNull LocalDateTime startedTime, @NotNull LocalDateTime endTime, List<QuestionDto> questions) { }
-    public record ExamResponse(Long examId, String title, LocalDateTime date, LocalDateTime startedTime, LocalDateTime endTime, ExamStatus status, List<QuestionDto> questions) { }
+    public record CreateExamRequest(@NotBlank String title, @NotNull LocalDateTime date, @NotNull LocalDateTime startedTime, @NotNull LocalDateTime endTime, List<QuestionDto> questions,Long examId, boolean isNew,boolean isUpdate,boolean isRemove) { }
+    public record ExamResponse(String title ,LocalDateTime lastUpdated,ExamStatus status) { }
     public record TeacherExamList(
             long teacherId,
             int page,

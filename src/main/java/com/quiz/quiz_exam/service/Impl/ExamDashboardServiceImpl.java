@@ -4,6 +4,7 @@ import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.entity.StudentAnswer;
 import com.quiz.quiz_exam.entity.StudentExam;
 import com.quiz.quiz_exam.entity.User;
+import com.quiz.quiz_exam.exception.EntryNotfoundException;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.StudentExamRepository;
 
@@ -26,7 +27,16 @@ public class ExamDashboardServiceImpl implements ExamDashboardService {
     private final UserRepository userRepository;
 
     @Override
-    public List<DashboardDto.ProgressOverTime> getExamResultsOverTime(Long teacherId) {
+    public DashboardDto.DashboardResponse getDashboard(Long teacherId) {
+        List<DashboardDto.ProgressOverTime> progress = getExamResultsOverTime(teacherId);
+        List<DashboardDto.GradeDistribution> grades = getGradeDistribution(teacherId);
+        List<DashboardDto.studentAverage> top = getTopStudents(teacherId);
+        List<DashboardDto.studentAverage> low = getLowStudents(teacherId);
+        return new DashboardDto.DashboardResponse(progress,grades,top,low);
+    }
+
+
+    private List<DashboardDto.ProgressOverTime> getExamResultsOverTime(Long teacherId) {
         List<StudentExam> allStudentExams = studentExamRepository.findByExam_TeacherId(teacherId);
 
         // Group by exam
@@ -57,8 +67,8 @@ public class ExamDashboardServiceImpl implements ExamDashboardService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<DashboardDto.GradeDistribution> getGradeDistribution(Long teacherId) {
+
+    private List<DashboardDto.GradeDistribution> getGradeDistribution(Long teacherId) {
         List<StudentExam> allStudentExams = studentExamRepository.findByExam_TeacherId(teacherId);
 
         Map<String, Long> gradeCount = new HashMap<>();
@@ -91,23 +101,22 @@ public class ExamDashboardServiceImpl implements ExamDashboardService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<DashboardDto.studentAverage> getTopStudents(Long teacherId, int limit) {
+
+    private List<DashboardDto.studentAverage> getTopStudents(Long teacherId) {
         return getStudentAverages(teacherId).stream()
                 .sorted(Comparator.comparingDouble(DashboardDto.studentAverage::averageScore).reversed())
-                .limit(limit)
+                .limit(5)
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<DashboardDto.studentAverage> getLowStudents(Long teacherId, int limit) {
+
+    private List<DashboardDto.studentAverage> getLowStudents(Long teacherId ) {
         return getStudentAverages(teacherId).stream()
                 .sorted(Comparator.comparingDouble(DashboardDto.studentAverage::averageScore))
-                .limit(limit)
+                .limit(5)
                 .collect(Collectors.toList());
     }
 
-    // ---------------- Helper Methods ----------------
 
     private double calculateScore(StudentExam studentExam) {
         List<StudentAnswer> answers = studentExam.getStudentAnswers();
@@ -145,4 +154,6 @@ public class ExamDashboardServiceImpl implements ExamDashboardService {
 
         return averages;
     }
+
+
 }

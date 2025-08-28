@@ -2,11 +2,14 @@ package com.quiz.quiz_exam.controller;
 
 import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.dto.StudentDtos;
+import com.quiz.quiz_exam.security.JwtUtil;
 import com.quiz.quiz_exam.service.ExamService;
 import com.quiz.quiz_exam.service.StudentExamService;
+import com.quiz.quiz_exam.util.StandResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,37 +22,56 @@ import org.springframework.web.bind.annotation.*;
 public class ExamController {
 
     private final ExamService examService;
-    private final StudentExamService studentExamService;
+    private final JwtUtil jwtUtil;
 
-    //  Teacher creates exam
+    //  Teacher creates or update or delete  exam
     @PostMapping("/create")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<ExamDtos.ExamResponse> create(
-            @RequestParam Long teacherId,
+    public ResponseEntity<StandResponseDto> createUpdateDeleteExam(
+            @RequestHeader("Authorization")String authHeader,
             @Valid @RequestBody ExamDtos.CreateExamRequest req) {
-        return ResponseEntity.ok(examService.createExam(teacherId, req));
+        String token=authHeader.substring(7);
+        Long teacherId=jwtUtil.extractUserId(token);
+        if(req.isRemove()){
+            return new ResponseEntity<>(
+                    new StandResponseDto( 204,"examDeleted successfully",null),
+            HttpStatus.NO_CONTENT
+                    );
+        }
+
+        return new ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Exam Created or updated   Successfully",examService.saveUpdateDeleteExam(teacherId, req)
+                ),
+                HttpStatus.OK
+        );
+
     }
-    //Teacher update the exams
-    @PreAuthorize("hasRole('TEACHER')")
-    @PutMapping("/update")
-    public ExamDtos.ExamResponse updateExam(
-            @RequestParam Long examId,
-            @RequestBody ExamDtos.CreateExamRequest req) {
-        return examService.updateExam(examId, req);
-    }
+
 
     //  Teacher lists own exams (Draft + Published)
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/teacher")
-    public ResponseEntity<Page<ExamDtos.ExamResponse>> listTeacherExams(@RequestBody ExamDtos.TeacherExamList teacherExamList) {
-        return ResponseEntity.ok(examService.listByTeacherExam( teacherExamList ));
+    public ResponseEntity<StandResponseDto> listTeacherExams(@RequestBody ExamDtos.TeacherExamList teacherExamList) {
+        return new ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Teacher Exam Lists",examService.listByTeacherExam( teacherExamList )
+                ),
+                HttpStatus.OK
+        );
     }
 
     //  List published exams (for students)
     @GetMapping("/published")
-    public ResponseEntity<Page<ExamDtos.ExamResponse>> listPublished(@RequestBody ExamDtos.TeacherExamList teacherExamList
+    public ResponseEntity<StandResponseDto> listPublished(@RequestBody ExamDtos.TeacherExamList teacherExamList
            ) {
-        return ResponseEntity.ok(examService.listPublished(teacherExamList ));
+
+        return new ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Teacher  Published Exam Lists",examService.listPublished(teacherExamList )
+                ),
+                HttpStatus.OK
+        );
     }
 
 
@@ -57,22 +79,27 @@ public class ExamController {
     //  Teacher publishes exam
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping("/{id}/publish")
-    public ResponseEntity<ExamDtos.ExamResponse> publish(@PathVariable Long id) {
-        return ResponseEntity.ok(examService.publish(id));
+    public ResponseEntity<StandResponseDto> publish(@PathVariable Long id) {
+
+        return new ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Teacher  Published The Exam Successfully",examService.publish(id)
+                ),
+                HttpStatus.OK
+        );
     }
 
     //  Get one exam (with questions)
     @GetMapping("/{id}")
-    public ResponseEntity<ExamDtos.ExamResponse> get(@PathVariable Long id) {
-        return ResponseEntity.ok(examService.get(id));
+    public ResponseEntity<StandResponseDto> get(@PathVariable Long id) {
+
+        return new ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Student exams",examService.get(id)
+                ),HttpStatus.OK
+        );
     }
 
-    // Teacher delete the exam
-    @PreAuthorize("hasRole('TEACHER')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        examService.deleteExam(id);
-        return ResponseEntity.noContent().build();
-    }
+
 
 }
