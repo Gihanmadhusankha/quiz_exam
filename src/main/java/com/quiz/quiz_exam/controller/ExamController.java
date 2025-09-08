@@ -25,7 +25,7 @@ public class ExamController {
     private final JwtUtil jwtUtil;
 
     //  Teacher creates or update or delete  exam
-    @PostMapping("/create")
+    @PostMapping("/manage")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<StandResponseDto> createUpdateDeleteExam(
             @RequestHeader("Authorization")String authHeader,
@@ -33,6 +33,7 @@ public class ExamController {
         String token=authHeader.substring(7);
         Long teacherId=jwtUtil.extractUserId(token);
         if(req.isRemove()){
+            examService.saveUpdateDeleteExam(teacherId, req);
             return new ResponseEntity<>(
                     new StandResponseDto( 204,"examDeleted successfully",null),
             HttpStatus.NO_CONTENT
@@ -41,7 +42,7 @@ public class ExamController {
 
         return new ResponseEntity<>(
                 new StandResponseDto(
-                        200,"Exam Created or updated   Successfully",examService.saveUpdateDeleteExam(teacherId, req)
+                        200,"Exam Created or updated  Successfully",examService.saveUpdateDeleteExam(teacherId, req)
                 ),
                 HttpStatus.OK
         );
@@ -51,18 +52,22 @@ public class ExamController {
 
     //  Teacher lists own exams (Draft + Published)
     @PreAuthorize("hasRole('TEACHER')")
-    @GetMapping("/teacher")
-    public ResponseEntity<StandResponseDto> listTeacherExams(@RequestBody ExamDtos.TeacherExamList teacherExamList) {
+    @PostMapping("/teacher")
+    public ResponseEntity<StandResponseDto> listTeacherExams(
+            @RequestHeader("Authorization")String authHeader,
+            @RequestBody ExamDtos.TeacherExamList teacherExamList) {
+        String token=authHeader.substring(7);
+        Long teacherId=jwtUtil.extractUserId(token);
         return new ResponseEntity<>(
                 new StandResponseDto(
-                        200,"Teacher Exam Lists",examService.listByTeacherExam( teacherExamList )
+                        200,"Teacher Exam Lists",examService.listByTeacherExam(  teacherId,teacherExamList )
                 ),
                 HttpStatus.OK
         );
     }
 
     //  List published exams (for students)
-    @GetMapping("/published")
+    @PostMapping("/published")
     public ResponseEntity<StandResponseDto> listPublished(@RequestBody ExamDtos.TeacherExamList teacherExamList
            ) {
 
@@ -76,29 +81,21 @@ public class ExamController {
 
 
 
-    //  Teacher publishes exam
+    //  Teacher publish the exam
     @PreAuthorize("hasRole('TEACHER')")
-    @PostMapping("/{id}/publish")
-    public ResponseEntity<StandResponseDto> publish(@PathVariable Long id) {
+    @PostMapping("/publish")
+    public ResponseEntity<StandResponseDto> publish(@RequestBody ExamDtos.Request req) {
 
         return new ResponseEntity<>(
                 new StandResponseDto(
-                        200,"Teacher  Published The Exam Successfully",examService.publish(id)
+                        200,"Teacher  Published The Exam Successfully",examService.publish(req.examId())
                 ),
                 HttpStatus.OK
         );
     }
 
-    //  Get one exam (with questions)
-    @GetMapping("/{id}")
-    public ResponseEntity<StandResponseDto> get(@PathVariable Long id) {
 
-        return new ResponseEntity<>(
-                new StandResponseDto(
-                        200,"Student exams",examService.get(id)
-                ),HttpStatus.OK
-        );
-    }
+
 
 
 

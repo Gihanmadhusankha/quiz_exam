@@ -1,12 +1,10 @@
 package com.quiz.quiz_exam.service.Impl;
 
-import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.dto.ExamDtos;
-import com.quiz.quiz_exam.dto.QuestionDtos;
-import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.Question;
 import com.quiz.quiz_exam.enums.ExamStatus;
+import com.quiz.quiz_exam.enums.RecordStatus;
 import com.quiz.quiz_exam.exception.EntryNotfoundException;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.QuestionRepository;
@@ -20,12 +18,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,26 +42,28 @@ public class ExamServiceImpl implements ExamService {
                     .date(req.date())
                     .startTime(req.startedTime())
                     .endTime(req.endTime())
-                    .status(ExamStatus.DRAFT)
+                    .examStatus(ExamStatus.DRAFT)
+                    .status(RecordStatus.ONLINE)
                     .build();
             exam = examRepository.save(exam);
 
             if (req.questions() != null) {
-                List<Question> questionList = new ArrayList<>();
                 for (var q : req.questions()) {
-                    Question qu = Question.builder()
-                            .exam(exam)
-                            .questionText(q.questionText())
-                            .optionA(q.optionA())
-                            .optionB(q.optionB())
-                            .optionC(q.optionC())
-                            .optionD(q.optionD())
-                            .correctOption(q.correctOption())
-                            .build();
-                    questionRepository.save(qu);
-                    questionList.add(qu);
+                    if (q.isNew()) {
+                        Question qu = Question.builder()
+                                .exam(exam)
+                                .questionText(q.questionText())
+                                .optionA(q.optionA())
+                                .optionB(q.optionB())
+                                .optionC(q.optionC())
+                                .optionD(q.optionD())
+                                .correctOption(q.correctOption())
+                                .status(RecordStatus.ONLINE)
+                                .build();
+                        exam.getQuestions().add(qu);
+                    }
                 }
-                exam.setQuestions(questionList);
+
             }
 
             return toResponse(examRepository.findById(exam.getExamId())
@@ -76,51 +72,75 @@ public class ExamServiceImpl implements ExamService {
             //update the exam
             Exam exam = examRepository.findById(req.examId())
                     .orElseThrow(() -> new EntryNotfoundException("Exam not found with id" + req.examId()));
-            if (exam.getStatus() == ExamStatus.PUBLISHED) {
-                throw new IllegalArgumentException("Caonnot update a published exam");
+            if (exam.getExamStatus() == ExamStatus.PUBLISHED) {
+                throw new IllegalArgumentException("Cannot update a published exam");
             }
             exam.setTitle(req.title());
             exam.setDate(req.date());
             exam.setStartTime(req.startedTime());
             exam.setEndTime(req.endTime());
-            //remove  old questions
-            if (!exam.getQuestions().isEmpty()) {
-                questionRepository.deleteAll(exam.getQuestions());
-                exam.getQuestions().clear();
 
-            }
+
             //Add new question
             if (req.questions() != null) {
-                List<Question> questionList = new ArrayList<>();
                 for (var q : req.questions()) {
-                    Question qu = Question.builder()
-                            .exam(exam)
-                            .questionText(q.questionText())
-                            .optionA(q.optionA())
-                            .optionB(q.optionB())
-                            .optionC(q.optionC())
-                            .optionD(q.optionD())
-                            .correctOption(q.correctOption())
-                            .build();
-                    exam.getQuestions().add(qu);
-                }
+                    if (q.isNew()) {
+                        // add question
+                        Question newQ = Question.builder()
+                                .exam(exam)
+                                .questionText(q.questionText())
+                                .optionA(q.optionA())
+                                .optionB(q.optionB())
+                                .optionC(q.optionC())
+                                .optionD(q.optionD())
+                                .correctOption(q.correctOption())
+                                .status(RecordStatus.ONLINE)
+                                .build();
+                        exam.getQuestions().add(newQ);
+                    } else if (q.isUpdate()) {
+                        //question update
+                        Question existing = questionRepository.findById(q.questionId())
+                                .orElseThrow(() -> new EntryNotfoundException("question not found"));
+                        existing.setQuestionText(q.questionText());
+                        existing.setOptionA(q.optionA());
+                        existing.setOptionB(q.optionB());
+                        existing.setOptionC(q.optionC());
+                        existing.setOptionD(q.optionD());
+                        existing.setCorrectOption(q.correctOption());
+                        existing.setStatus(RecordStatus.ONLINE);
 
+                        questionRepository.save(existing);
+                    } else if (q.isRemove()) {
+                        //question delete
+
+                        Question toRemove = questionRepository.findById(q.questionId())
+                                .orElseThrow(() -> new EntryNotfoundException("Question not found"));
+
+
+                        toRemove.setStatus(RecordStatus.OFFLINE);
+                        questionRepository.save(toRemove);
+                    }
+                }
             }
             return toResponse(examRepository.save(exam));
-        }else if(req.isRemove()){
+        } else if (req.isRemove()) {
             //delete the exam
-            Exam exam =examRepository.findById(req.examId())
-                    .orElseThrow(()->new EntryNotfoundException("exam not found with id"+req.examId()));
+            Exam exam = examRepository.findById(req.examId())
+                    .orElseThrow(() -> new EntryNotfoundException("exam not found with id" + req.examId()));
 
-            //delete Question first
-            if(!exam.getQuestions().isEmpty()){
-                questionRepository.deleteAll(exam.getQuestions());
+            exam.setStatus(RecordStatus.OFFLINE);
+            if (!exam.getQuestions().isEmpty()) {
+                for (Question q : exam.getQuestions()) {
+                    q.setStatus(RecordStatus.OFFLINE);
+                    questionRepository.save(q);
+                }
             }
-            examRepository.delete(exam);
-
+            return toResponse(examRepository.save(exam));
         }
-        throw new IllegalArgumentException("At least one operation (isNew,isUpdate,isRemove) must be  true");
+         throw new IllegalArgumentException("Invalid request type");
+
     }
+
     private void validExamDatetime(ExamDtos.CreateExamRequest req){
         LocalDateTime today= LocalDate.now().atStartOfDay();
         LocalDateTime now =LocalDateTime.now();
@@ -128,6 +148,11 @@ public class ExamServiceImpl implements ExamService {
         if (req.date().isBefore(LocalDate.now().atStartOfDay())) {
             throw new IllegalArgumentException("Exam date cannot be in the past");
         }
+        // Validate start time is in the future
+        if (req.startedTime().isBefore(now)) {
+            throw new IllegalArgumentException("Start time must be in the future");
+        }
+
         //validate start and end times
         if (!req.startedTime().isBefore(req.endTime())) {
             throw new IllegalArgumentException("start time must be before end time");
@@ -140,35 +165,42 @@ public class ExamServiceImpl implements ExamService {
 
     public Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList) {
         Pageable pageable = PageRequest.of(teacherExamList.page(), teacherExamList.size());
+
         return examRepository.findPublishedExams(ExamStatus.PUBLISHED, teacherExamList.search(), pageable)
                 .map(this::toResponse);
     }
 
     @Override
-    public Page<ExamDtos.ExamResponse> listByTeacherExam(ExamDtos.TeacherExamList teacherExamList) {
+    public Page<ExamDtos.ExamResponse> listByTeacherExam(Long teacherId,ExamDtos.TeacherExamList teacherExamList) {
         Pageable pageable = PageRequest.of(teacherExamList.page(), teacherExamList.size());
         if (teacherExamList.search() == null || teacherExamList.search().isBlank() || teacherExamList.search().isEmpty()){
-            return examRepository.findByTeacherId(teacherExamList.teacherId(), pageable)
+            return examRepository.findByTeacherId(teacherId, pageable)
                     .map(this::toResponse);
         }else{
-            return examRepository.findByTeacherIdAndSearch(teacherExamList.teacherId(), teacherExamList.search(), pageable)
+            return examRepository.findByTeacherIdAndSearch(teacherId, teacherExamList.search(), pageable)
                     .map(this::toResponse);
         }
     }
-
+    @Transactional
     public ExamDtos.ExamResponse publish(Long examId) {
         Exam e = examRepository.findById(examId).orElseThrow();
-        e.setStatus(ExamStatus.PUBLISHED);
+        if(e.getExamStatus()==ExamStatus.PUBLISHED) {
+            throw new IllegalArgumentException("exam is already published");
+        }
+
+        if(e.getExamStatus()==ExamStatus.DRAFT) {
+            e.setExamStatus(ExamStatus.PUBLISHED);
+        }
         return toResponse(examRepository.save(e));
+
+
     }
 
-    public ExamDtos.ExamResponse get(Long id) {
-        return toResponse(examRepository.findById(id).orElseThrow());
-    }
+
 
     private ExamDtos.ExamResponse toResponse(Exam e) {
 
-        return new ExamDtos.ExamResponse(e.getTitle(),e.getLastUpdated(),e.getStatus());
+        return new ExamDtos.ExamResponse(e.getTitle(),e.getLastUpdated(),e.getExamStatus());
     }
 
 }

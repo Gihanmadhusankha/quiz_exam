@@ -1,5 +1,6 @@
 package com.quiz.quiz_exam.entity;
 
+import com.quiz.quiz_exam.enums.RecordStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,9 @@ public class StudentAnswer {
     @JoinColumn(name = "question_id")
     private Question question;
 
+    @Column(name="status",nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RecordStatus status=RecordStatus.ONLINE;
 
 
 }

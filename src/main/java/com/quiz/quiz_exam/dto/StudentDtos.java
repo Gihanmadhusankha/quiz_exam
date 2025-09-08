@@ -1,12 +1,10 @@
 package com.quiz.quiz_exam.dto;
 
-import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.enums.StudentExamStatus;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,14 +13,14 @@ import java.util.List;
 @Data
 public class StudentDtos {
 
-
-
-    // When student starts exam → status = PENDING
     public record StartExamRequest(
-            @NotNull Long examId,
-            @NotNull Long studentId,
-            StudentExamStatus status
+            @NotNull Long examId
+
+
+
     ) { }
+
+
 
     // Student’s answer for one question
     public record AnswerDto(
@@ -34,21 +32,20 @@ public class StudentDtos {
 
     // When submitting one answer → status = ATTENDED
     public record SubmitAnswersRequest(
-            @NotNull Long studentExamId,
+            @NotNull Long examId,
             @NotNull Long questionId,
             @NotBlank String selectedOption
     ) { }
 
-    // Response after submission
-    public record StudentExamResponse(
-            Long studentExamId,
-            Long examId,
-            StudentExamStatus status,
-            int totalQuestions,
-            int correctCount,
-            List<AnswerDto> answers
 
-    ) {}
+    public record StartExamResponse(
+            Long studentExamId,
+            String title,
+            String duration ,
+            List<QuestionDtos.Question>questions
+    ){
+
+    }
     public record StudentInfo(
             Long id,
             String name,
@@ -67,13 +64,13 @@ public class StudentDtos {
             String title,
             LocalDateTime StartTime,
             long ExamDuration,
-            ExamStatus status
+            String status
 
 
 
     ){}
     public record StudentRequestExamList(
-            long studentId,
+
             int page,
             int size,
             String search

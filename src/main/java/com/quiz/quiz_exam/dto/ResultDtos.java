@@ -4,6 +4,9 @@ import com.quiz.quiz_exam.enums.StudentExamStatus;
 import java.util.List;
 
 public class ResultDtos {
+    public record ResultRequest(
+            Long studentExamId
+    ){}
 
     public record StudentExamSummary(
             Long studentExamId,

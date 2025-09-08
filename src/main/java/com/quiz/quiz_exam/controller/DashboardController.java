@@ -22,9 +22,10 @@ public class DashboardController {
     private final ExamDashboardService examDashboardService;
     private final JwtUtil jwtUtil;
 
-    @GetMapping("/progess")
+    @PostMapping("/progess")
     public ResponseEntity<StandResponseDto>getDashboard(
-            @RequestHeader("Authorization")String authHeader) {
+            @RequestHeader("Authorization")String authHeader
+            ) {
         String token=authHeader.substring(7);
         Long teacherId=jwtUtil.extractUserId(token);
         {

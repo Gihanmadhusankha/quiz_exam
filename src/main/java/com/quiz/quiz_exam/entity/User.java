@@ -1,5 +1,7 @@
 package com.quiz.quiz_exam.entity;
 
+
+import com.quiz.quiz_exam.enums.RecordStatus;
 import com.quiz.quiz_exam.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +27,9 @@ public class User {
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole role;
+    @Column(name="status",nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RecordStatus status=RecordStatus.ONLINE;
 
 
 

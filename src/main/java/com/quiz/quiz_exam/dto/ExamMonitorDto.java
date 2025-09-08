@@ -19,6 +19,6 @@ public class ExamMonitorDto {
     private LocalDateTime examEndTime;
     private Long completedCount;
     private Long totalCount;
-    private Duration remainingTime;
+    private String remainingTime;
     private List<StudentDtos.StudentInfo> Students;
 }

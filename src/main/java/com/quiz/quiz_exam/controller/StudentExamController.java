@@ -1,12 +1,15 @@
 package com.quiz.quiz_exam.controller;
 
+import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.dto.ResultDtos;
 import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.dto.StudentDtos.*;
 
 import com.quiz.quiz_exam.exception.EntryNotfoundException;
+import com.quiz.quiz_exam.security.JwtUtil;
 import com.quiz.quiz_exam.service.StudentExamService;
 import com.quiz.quiz_exam.util.StandResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -20,60 +23,74 @@ import org.springframework.web.bind.annotation.*;
 public class StudentExamController {
 
     private final StudentExamService studentExamService;
+    private final JwtUtil jwtUtil;
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/start")
-    public ResponseEntity<StandResponseDto> startExam(@RequestBody StartExamRequest request) {
+    public ResponseEntity<StandResponseDto> startExam(
+            @RequestHeader("Authorization")String authHeader,
+            @RequestBody StartExamRequest request){
+             String token=authHeader.substring(7);
+            Long studentId=jwtUtil.extractUserId(token);
+
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        201,"Student Start the exam ",studentExamService.startExam(request)
-                ), HttpStatus.CREATED
+                        201,"Student load the exam ",studentExamService.startExam(request.examId(),studentId)
+                ), HttpStatus.OK
                 );
     }
 
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/submit")
-    public ResponseEntity<StandResponseDto> submitExam(@RequestBody SubmitAnswersRequest request) {
+    public ResponseEntity<StandResponseDto> submitExam(
+            @RequestHeader("Authorization")String authHeader,
+            @RequestBody SubmitAnswersRequest request) {
+        String token=authHeader.substring(7);
+        Long studentId=jwtUtil.extractUserId(token);
 
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        201,"student submit the answer ",studentExamService.submitAnswer(request)
+                        201,"student submit the answer ",studentExamService.submitAnswer(studentId,request)
                 ), HttpStatus.CREATED
         );
     }
 
      //Finish the exam
      @PreAuthorize("hasRole('STUDENT')")
-    @PostMapping("/finish/{studentExamId}")
+    @PostMapping("/finish")
     public ResponseEntity<StandResponseDto> finishExam(
-            @PathVariable Long studentExamId) {
-
+            @RequestBody ExamDtos.Request req,
+             @RequestHeader("Authorization")String authHeader){
+         String token=authHeader.substring(7);
+         Long studentId=jwtUtil.extractUserId(token);
          return new  ResponseEntity<>(
                  new StandResponseDto(
-                         201,"student finished the exam ",studentExamService.finishExam(studentExamId)
+                         201,"student finished the exam ",studentExamService.finishExam(studentId,req.examId())
                  ), HttpStatus.CREATED
          );
     }
 
     //Get  student results
     //@PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/result/{studentExamId}")
+    @PostMapping("/result")
     public ResponseEntity<StandResponseDto> getResult(
-            @PathVariable Long studentExamId) {
+            @RequestBody ResultDtos.ResultRequest req) {
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        200,"student Exam Results",studentExamService.getStudentResult(studentExamId)
+                        200,"student Exam Results",studentExamService.getStudentResult(req.studentExamId())
                 ), HttpStatus.OK
         );
     }
     //List of student exams-Available ,pending
     @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/lists")
-    public ResponseEntity<StandResponseDto> StudentsExamsLists( @RequestBody StudentRequestExamList studentRequestExamList
+    @PostMapping("/lists")
+    public ResponseEntity<StandResponseDto> StudentsExamsLists( @RequestHeader("Authorization")String authHeader, @RequestBody StudentRequestExamList studentRequestExamList
            ) {
+        String token=authHeader.substring(7);
+        Long studentId=jwtUtil.extractUserId(token);
 
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        200,"student Exam Lists",studentExamService.StudentExamLists(studentRequestExamList)
+                        200,"student Exam Lists",studentExamService.StudentExamLists(studentId,studentRequestExamList)
                 ), HttpStatus.OK
         );
     }

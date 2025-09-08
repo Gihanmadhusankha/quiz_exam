@@ -1,11 +1,10 @@
 package com.quiz.quiz_exam.entity;
 
-import com.quiz.quiz_exam.enums.ExamStatus;
+import com.quiz.quiz_exam.enums.RecordStatus;
 import com.quiz.quiz_exam.enums.StudentExamStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -26,11 +25,15 @@ public class StudentExam {
     private List<StudentAnswer> studentAnswers;
 
     @Enumerated(EnumType.STRING)
-    @Column(name="status",nullable = false,length=20)
-    private StudentExamStatus status=StudentExamStatus.PENDING;
+    @Column(name="studentExam_status",nullable = false,length=20)
+    private StudentExamStatus studentExamStatus=StudentExamStatus.PENDING;
 
+    @Column(name="status",nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RecordStatus status=RecordStatus.ONLINE;
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
+
 
 }

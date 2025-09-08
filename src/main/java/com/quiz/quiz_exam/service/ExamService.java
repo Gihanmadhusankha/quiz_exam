@@ -9,10 +9,8 @@ public interface ExamService {
 
     Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList);
     ExamDtos.ExamResponse publish(Long examId);
-    ExamDtos.ExamResponse get(Long id);
-
     ExamDtos.ExamResponse saveUpdateDeleteExam(Long teacherId, ExamDtos.CreateExamRequest req );
-    Page<ExamDtos.ExamResponse> listByTeacherExam(ExamDtos.TeacherExamList teacherExamList);
+    Page<ExamDtos.ExamResponse> listByTeacherExam(Long teacherId ,ExamDtos.TeacherExamList teacherExamList);
 
 
 

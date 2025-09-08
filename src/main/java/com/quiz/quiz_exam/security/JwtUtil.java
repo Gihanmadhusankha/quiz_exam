@@ -14,15 +14,33 @@ public class JwtUtil {
     private final Key key = Keys.hmacShaKeyFor(
             "very-long-secret-key-change-me-please-1234567890".getBytes()
     );
-    private final long expirationMs = 1000 * 60 * 60 * 12; // 12h
+    private final long expirationMs = 1000 * 60 * 60 * 12;
 
-    //  generate token with custom claims
-    public String generateToken(String subject, Map<String, Object> claims) {
+   public String generateToken(String subject, Map<String, Object> claims) {
+            return Jwts.builder()
+                    .setSubject(subject)
+                    .addClaims(claims)
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                    .signWith(key, SignatureAlgorithm.HS256)
+                   .compact();
+    }
+    public String generateAccessToken(String userId) {
+        long accessExp = 1000 * 60 * 60; // 1 hour
         return Jwts.builder()
-                .setSubject(subject)
-                .addClaims(claims)
+                .setSubject(userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + accessExp))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshToken(String userId) {
+        long refreshExp = 1000L * 60 * 60 * 24 * 7; // 7 days
+        return Jwts.builder()
+                .setSubject(userId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshExp))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -60,4 +78,5 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 }
+
 

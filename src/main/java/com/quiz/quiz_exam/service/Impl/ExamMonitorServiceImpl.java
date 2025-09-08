@@ -24,7 +24,7 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
     private final StudentExamRepository studentExamRepository;
 
     @Override
-    public ExamMonitorDto getExamMonitorData(Long examId) {
+    public ExamMonitorDto getExamMonitorData(Long teacherId,Long examId) {
         Exam exam =examRepository.findById(examId)
                 .orElseThrow(()-> new EntryNotfoundException("Exam not found"));
         long completeCount=studentExamRepository.countCompleted(examId);
@@ -40,6 +40,9 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
         if (remaining.isNegative()) {
             remaining = Duration.ZERO;
         }
+        long minutes = remaining.toMinutes();
+        long seconds = remaining.minusMinutes(minutes).getSeconds();
+        String formatted = String.format("%02d:%02d", minutes, seconds);
 
         ExamMonitorDto dto = new ExamMonitorDto();
         dto.setExamName(exam.getTitle());
@@ -47,12 +50,12 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
         dto.setExamEndTime(exam.getEndTime());
         dto.setCompletedCount(completeCount);
         dto.setTotalCount(totalCount);
-        dto.setRemainingTime(remaining);
+        dto.setRemainingTime(formatted);
         dto.setStudents(studentExams.stream()
                 .map(se -> new StudentDtos.StudentInfo(
                         se.getStudent().getUserId(),
                         se.getStudent().getName(),
-                        se.getStatus().toString()
+                        se.getStudentExamStatus().toString()
                 )).toList()
         );
 
@@ -61,12 +64,12 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
     }
 
     @Override
-    public void endExam(Long examId) {
+    public void endExam( Long teacherId,Long examId) {
 
             Exam exam=examRepository .findById(examId)
                     .orElseThrow(() -> new RuntimeException("Exam not found"));
 
-            exam.setStatus(ExamStatus.ENDED);
+            exam.setExamStatus(ExamStatus.ENDED);
             examRepository.save(exam);
         }
 

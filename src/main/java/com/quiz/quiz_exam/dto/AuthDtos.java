@@ -3,7 +3,11 @@ package com.quiz.quiz_exam.dto;
 
 import com.quiz.quiz_exam.enums.UserRole;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
+import lombok.Data;
 
+@Builder
+@Data
 public class AuthDtos {
     public record RegisterRequest(
             @NotBlank String name,

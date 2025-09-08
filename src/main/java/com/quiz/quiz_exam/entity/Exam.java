@@ -1,6 +1,7 @@
 package com.quiz.quiz_exam.entity;
 
 import com.quiz.quiz_exam.enums.ExamStatus;
+import com.quiz.quiz_exam.enums.RecordStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,9 +42,14 @@ public class Exam {
 
     @Column(name="exam_status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private ExamStatus status = ExamStatus.DRAFT;
+    private ExamStatus examStatus = ExamStatus.DRAFT;
+
+    @Column(name="status",nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RecordStatus status=RecordStatus.ONLINE;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Question> questions = new ArrayList<>();
 
     @PrePersist
