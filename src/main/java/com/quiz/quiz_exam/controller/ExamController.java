@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class ExamController {
 
     private final ExamService examService;
@@ -47,6 +48,20 @@ public class ExamController {
                 HttpStatus.OK
         );
 
+    }
+    @PostMapping("/load")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<StandResponseDto> loadExam(
+            @RequestHeader("Authorization")String authHeader,
+            @RequestBody ExamDtos.loadExamRequest request){
+        String token=authHeader.substring(7);
+        Long teacherId=jwtUtil.extractUserId(token);
+
+        return new  ResponseEntity<>(
+                new StandResponseDto(
+                        200,"Student load the exam ",examService.loadExam(request.examId(),teacherId)
+                ), HttpStatus.OK
+        );
     }
 
 

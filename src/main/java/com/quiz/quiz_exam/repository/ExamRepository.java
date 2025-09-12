@@ -19,13 +19,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                                   @Param("search") String search,
                                   Pageable pageable);
 
-    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId")
+    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId ORDER BY e.date DESC")
     Page<Exam> findByTeacherId(@Param("teacherId") Long teacherId,
                                Pageable pageable);
 
 
 
-    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId AND e.title LIKE %:search%")
+    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId AND e.title LIKE %:search% ORDER BY e.date DESC")
     Page<Exam> findByTeacherIdAndSearch(@Param("teacherId") Long teacherId,
                                         @Param("search") String search,
                                         Pageable pageable);
@@ -34,6 +34,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId")
     List<Exam> findByTeachId(@Param("teacherId") Long teacherId);
 
-
-    List<Exam> findByExamStatus(ExamStatus examStatus);
+    @Query("SELECT e FROM Exam e WHERE e.examStatus = :status")
+    List<Exam> findByExamStatus(@Param("status") ExamStatus status);
+    @Query("SELECT e FROM Exam e WHERE e.examId = :examId")
+    Optional<Exam> findByExamId(@Param("examId")long examId);
 }

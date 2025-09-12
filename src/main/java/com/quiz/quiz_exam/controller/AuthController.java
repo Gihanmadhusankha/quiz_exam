@@ -22,7 +22,7 @@ public class AuthController {
 
         return  new ResponseEntity<>(
                 new StandResponseDto(
-                        201, "user register successfully", authService.register(req)
+                        200, "user register successfully", authService.register(req)
                 ),
                 HttpStatus.CREATED
                 );

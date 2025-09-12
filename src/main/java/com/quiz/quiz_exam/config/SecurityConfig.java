@@ -7,6 +7,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -24,17 +26,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for Postman testing
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Allow authentication endpoints and H2 console
                         .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-                        // All other endpoints require authentication
                         .anyRequest().authenticated()
-                );
+                )
+                // Enable CORS for Spring Security
+                .cors(AbstractHttpConfigurer::disable)
+        ;
 
         // Allow H2 console frames
-        http.headers(h -> h.frameOptions(f -> f.disable()));
+        http.headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
         // Add JWT filter
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

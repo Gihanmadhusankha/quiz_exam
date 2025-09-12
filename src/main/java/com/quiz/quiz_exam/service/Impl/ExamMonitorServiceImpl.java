@@ -1,11 +1,13 @@
 package com.quiz.quiz_exam.service.Impl;
 
+import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.dto.ExamMonitorDto;
 import com.quiz.quiz_exam.dto.StudentDtos;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.StudentExam;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.exception.EntryNotfoundException;
+import com.quiz.quiz_exam.exception.ExamTimeOverException;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.StudentExamRepository;
 import com.quiz.quiz_exam.service.ExamMonitorService;
@@ -64,11 +66,16 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
     }
 
     @Override
-    public void endExam( Long teacherId,Long examId) {
+    public void endExam(Long teacherId, ExamDtos.Request req) {
 
-            Exam exam=examRepository .findById(examId)
-                    .orElseThrow(() -> new RuntimeException("Exam not found"));
-
+            Exam exam=examRepository.findByExamId(req.examId())
+                    .orElseThrow(() -> new EntryNotfoundException("Exam not found"));
+            if(req.isTimerEnd()){
+                exam.setExamStatus(ExamStatus.ENDED);
+                examRepository.save(exam);
+                throw new ExamTimeOverException("Exam time is over, exam ended automatically");
+            }
+            //manually teacher end the exam
             exam.setExamStatus(ExamStatus.ENDED);
             examRepository.save(exam);
         }

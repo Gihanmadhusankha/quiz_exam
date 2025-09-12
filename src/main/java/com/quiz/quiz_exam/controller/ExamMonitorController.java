@@ -32,8 +32,8 @@ public class ExamMonitorController {
     public ResponseEntity<StandResponseDto> endExam(@RequestHeader("Authorization")String authHeader,@RequestBody ExamDtos.Request req){
         String token=authHeader.substring(7);
         Long teacherId=jwtUtil.extractUserId(token);
-        examMonitorService.endExam(teacherId,req.examId());
 
+        examMonitorService.endExam(teacherId, req);
 
         return  new ResponseEntity<>(
                 new StandResponseDto(

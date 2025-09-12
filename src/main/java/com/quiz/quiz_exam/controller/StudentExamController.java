@@ -34,7 +34,7 @@ public class StudentExamController {
 
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        201,"Student load the exam ",studentExamService.startExam(request.examId(),studentId)
+                        200,"Student load the exam ",studentExamService.startExam(request.examId(),studentId)
                 ), HttpStatus.OK
                 );
     }
@@ -49,7 +49,7 @@ public class StudentExamController {
 
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        201,"student submit the answer ",studentExamService.submitAnswer(studentId,request)
+                        200,"student submit the answer ",studentExamService.submitAnswer(studentId,request)
                 ), HttpStatus.CREATED
         );
     }
@@ -64,7 +64,7 @@ public class StudentExamController {
          Long studentId=jwtUtil.extractUserId(token);
          return new  ResponseEntity<>(
                  new StandResponseDto(
-                         201,"student finished the exam ",studentExamService.finishExam(studentId,req.examId())
+                         200,"student finished the exam ",studentExamService.finishExam(studentId,req)
                  ), HttpStatus.CREATED
          );
     }
@@ -73,10 +73,26 @@ public class StudentExamController {
     //@PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/result")
     public ResponseEntity<StandResponseDto> getResult(
-            @RequestBody ResultDtos.ResultRequest req) {
+            @RequestBody ResultDtos.ResultRequest req,
+            @RequestHeader("Authorization")String authHeader){
+        String token=authHeader.substring(7);
+        Long userId=jwtUtil.extractUserId(token);
+        String role=jwtUtil.extractUserRole(token);
+        Object resultData;
+
+        if(role.equals("TEACHER")){
+            resultData=studentExamService.getStudentResult(req.studentExamId());
+        }
+        else if(role.equals("STUDENT")){
+            resultData=studentExamService.getOwnResult(req.studentExamId(),userId);
+        }
+        else{
+            throw new EntryNotfoundException("Unauthorized role");
+        }
+
         return new  ResponseEntity<>(
                 new StandResponseDto(
-                        200,"student Exam Results",studentExamService.getStudentResult(req.studentExamId())
+                        200,"student Exam Results",resultData
                 ), HttpStatus.OK
         );
     }

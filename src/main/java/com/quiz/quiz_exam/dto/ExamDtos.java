@@ -16,6 +16,25 @@ public class ExamDtos {
             String search
     ){}
     public record Request(
-            long examId
+            Long examId,
+            boolean isTimerEnd
+
     ){}
+    public record loadExamRequest(
+            @NotNull Long examId
+
+
+
+    ) { }
+    public record loadExamResponse(
+            Long examId,
+            String title,
+            LocalDateTime date,
+            LocalDateTime startedTime,
+            LocalDateTime endTime,
+            List<QuestionDto> questions
+
+
+    ){}
+
 }

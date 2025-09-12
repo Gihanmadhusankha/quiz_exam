@@ -7,6 +7,9 @@ import org.springframework.data.domain.Page;
 
 public interface ExamService {
 
+     ExamDtos.loadExamResponse loadExam(Long examId, Long teacherId) ;
+
+
     Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList);
     ExamDtos.ExamResponse publish(Long examId);
     ExamDtos.ExamResponse saveUpdateDeleteExam(Long teacherId, ExamDtos.CreateExamRequest req );

@@ -6,6 +6,9 @@ import com.quiz.quiz_exam.entity.Question;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.enums.RecordStatus;
 import com.quiz.quiz_exam.exception.EntryNotfoundException;
+import com.quiz.quiz_exam.exception.ExamAlreadyPublishedCompletedException;
+import com.quiz.quiz_exam.exception.InvalidTimeException;
+import com.quiz.quiz_exam.exception.UnauthorizedAccessException;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.QuestionRepository;
 import com.quiz.quiz_exam.service.ExamService;
@@ -146,22 +149,50 @@ public class ExamServiceImpl implements ExamService {
         LocalDateTime now =LocalDateTime.now();
         //validate date
         if (req.date().isBefore(LocalDate.now().atStartOfDay())) {
-            throw new IllegalArgumentException("Exam date cannot be in the past");
+            throw new InvalidTimeException("Exam date cannot be in the past");
         }
         // Validate start time is in the future
         if (req.startedTime().isBefore(now)) {
-            throw new IllegalArgumentException("Start time must be in the future");
+            throw new InvalidTimeException("Start time must be in the future");
         }
 
         //validate start and end times
         if (!req.startedTime().isBefore(req.endTime())) {
-            throw new IllegalArgumentException("start time must be before end time");
+            throw new InvalidTimeException("start time must be before end time");
         }
         if(req.date().isEqual(today)&& req.startedTime().isBefore(now)){
-            throw new IllegalArgumentException("Start time must be in the future");
+            throw new InvalidTimeException("Start time must be in the future");
         }
     }
 
+
+    @Override
+    public ExamDtos.loadExamResponse loadExam(Long examId, Long teacherId) {
+
+         Exam exam= examRepository.findById(examId)
+                 .orElseThrow(()-> new EntryNotfoundException("Exam not found"));
+            if(!exam.getTeacherId().equals(teacherId)){
+                throw new UnauthorizedAccessException("Teacher not authorized to access this exam");
+            }
+            return new ExamDtos.loadExamResponse(
+                    exam.getExamId(),
+                    exam.getTitle(),
+                    exam.getDate(),
+                    exam.getStartTime(),
+                    exam.getEndTime(),
+                    exam.getQuestions().stream()
+                            .filter(q->q.getStatus()==RecordStatus.ONLINE)
+                            .map(q->new ExamDtos.QuestionDto(
+                                    q.getQuestionId(),
+                                    q.getQuestionText(),
+                                    q.getOptionA(),
+                                    q.getOptionB(),
+                                    q.getOptionC(),
+                                    q.getOptionD(),
+                                    q.getCorrectOption()
+                            )).toList()
+            );
+    }
 
     public Page<ExamDtos.ExamResponse> listPublished(ExamDtos.TeacherExamList teacherExamList) {
         Pageable pageable = PageRequest.of(teacherExamList.page(), teacherExamList.size());
@@ -185,7 +216,7 @@ public class ExamServiceImpl implements ExamService {
     public ExamDtos.ExamResponse publish(Long examId) {
         Exam e = examRepository.findById(examId).orElseThrow();
         if(e.getExamStatus()==ExamStatus.PUBLISHED) {
-            throw new IllegalArgumentException("exam is already published");
+            throw new ExamAlreadyPublishedCompletedException("exam is already published");
         }
 
         if(e.getExamStatus()==ExamStatus.DRAFT) {

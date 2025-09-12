@@ -9,3 +9,4 @@ public class EntryNotfoundException extends RuntimeException {
          super(message);
      }
 }
+

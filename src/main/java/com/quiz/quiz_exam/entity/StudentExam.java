@@ -26,7 +26,7 @@ public class StudentExam {
 
     @Enumerated(EnumType.STRING)
     @Column(name="studentExam_status",nullable = false,length=20)
-    private StudentExamStatus studentExamStatus=StudentExamStatus.PENDING;
+    private StudentExamStatus studentExamStatus=StudentExamStatus.NEW;
 
     @Column(name="status",nullable = false)
     @Enumerated(EnumType.STRING)

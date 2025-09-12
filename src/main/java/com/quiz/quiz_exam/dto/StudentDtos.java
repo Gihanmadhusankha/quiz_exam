@@ -41,8 +41,10 @@ public class StudentDtos {
     public record StartExamResponse(
             Long studentExamId,
             String title,
-            String duration ,
+          //  String duration ,
             List<QuestionDtos.Question>questions
+
+
     ){
 
     }

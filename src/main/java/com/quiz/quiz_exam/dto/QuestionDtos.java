@@ -21,7 +21,7 @@ public class QuestionDtos {
 
     public record QuestionResponse(
             Long id,
-            Long examId,
+         //   Long examId,
             String questionText,
             String optionA,
             String optionB,
