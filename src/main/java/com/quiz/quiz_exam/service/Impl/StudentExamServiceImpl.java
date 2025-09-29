@@ -1,5 +1,4 @@
 package com.quiz.quiz_exam.service.Impl;
-
 import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.dto.QuestionDtos;
 import com.quiz.quiz_exam.dto.ResultDtos;
@@ -18,13 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.AccessDeniedException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.quiz.quiz_exam.enums.StudentExamStatus.*;
@@ -39,6 +34,7 @@ public class StudentExamServiceImpl implements StudentExamService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
     private final StudentAnswerRepository studentAnswerRepository;
+
     @Transactional
 
     // Student starts the exam
@@ -46,32 +42,11 @@ public class StudentExamServiceImpl implements StudentExamService {
         // Get Exam
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new EntryNotfoundException("Exam not found"));
-
-        // Get Student (User)
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new EntryNotfoundException("Student not found"));
 
-
-        //check the Started time
-
-        LocalDateTime now =LocalDateTime.now();
-        if(now.isBefore(exam.getStartTime())){
-            throw new InvalidTimeException("Exam has not started yet");
-        }
-        if(now.isAfter(exam.getEndTime())){
-            throw new InvalidTimeException("Exam is already finished");
-        }
-
-        //check whether exam is ended or not
-       if(exam.getExamStatus()== ExamStatus.ENDED){
-           throw new ExamTimeOverException("Exam has ended");
-       }
-        //check whether exam is published or not
-        if(exam.getExamStatus()!= ExamStatus.PUBLISHED){
-            throw new ExamNotPublishedException("Exam is not published yet");
-        }
-       //check if exam already started for this student
-        StudentExam studentExam = (StudentExam) studentExamRepository
+        //check if exam already started for this student
+        StudentExam studentExam =  studentExamRepository
                 .findByStudentAndExam(studentId, examId)
                 .orElse(null);
 
@@ -90,36 +65,54 @@ public class StudentExamServiceImpl implements StudentExamService {
         }
 
 
-        // Calculate remaining time (based on exam end time)
-      /*  long timeLeftSeconds = Duration.between(now, exam.getEndTime()).toSeconds();
-        if (timeLeftSeconds <= 0) {
-            studentExam.setStudentExamStatus(ATTENDED);
-            studentExamRepository.save(studentExam);
-            timeLeftSeconds = 0;
-        }
-        long hours = timeLeftSeconds / 3600;
-        long minutes = (timeLeftSeconds % 3600) / 60;
-        long seconds = timeLeftSeconds % 60;
-*/
 
-       // String formattedDuration = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+
+        //check the Started time
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(exam.getStartTime())) {
+            throw new InvalidTimeException("Exam has not started yet");
+        }
+        if (now.isAfter(exam.getEndTime())) {
+            throw new InvalidTimeException("Exam is already finished");
+        }
+
+        //check whether exam is ended or not
+        if (exam.getExamStatus() == ExamStatus.ENDED) {
+            throw new ExamTimeOverException("Exam has ended");
+        }
+        //check whether exam is published or not
+        if (exam.getExamStatus() != ExamStatus.PUBLISHED) {
+            throw new ExamNotPublishedException("Exam is not published yet");
+        }
+        //if student already attended ,block the  re-start
+        if (studentExam.getStudentExamStatus() == StudentExamStatus.ATTENDED) {
+            throw new ExamAlreadyPublishedCompletedException("You have already completed this exam");
+
+
+        }
         // Convert Exam.Questions → DTO
-        List<QuestionDtos.Question> questionDtos= exam.getQuestions()
+        List<QuestionDtos.Question> questionDtos = exam.getQuestions()
                 .stream()
-                .map(q -> new QuestionDtos.Question(q.getQuestionId(), q.getQuestionText(),q.getOptionA(),q.getOptionB(),q
-                        .getOptionC(),q.getOptionD())
+                .map(q -> new QuestionDtos.Question(q.getQuestionId(), q.getQuestionText(), q.getOptionA(), q.getOptionB(), q
+                        .getOptionC(), q.getOptionD())
                 ).collect(Collectors.toList());
 
+        Long lastAnsweredQuestionId = studentAnswerRepository
+                .findLastAnsweredQuestionId(studentExam.getStudentExamId())
+                .stream()
+                .findFirst()
+                .orElse(null);
 
-        return new StudentDtos.StartExamResponse(studentExam.getStudentExamId(),exam.getTitle(),questionDtos);
+
+
+        return new StudentDtos.StartExamResponse(exam.getExamId(), studentExam.getStudentExamId(), exam.getTitle(),exam.getEndTime(), questionDtos,lastAnsweredQuestionId);
     }
-
-
 
 
     @Transactional
     // Submit a single answer
-    public StudentDtos.AnswerDto submitAnswer(Long studentId,StudentDtos.SubmitAnswersRequest request) {
+    public StudentDtos.AnswerDto submitAnswer(Long studentId, StudentDtos.SubmitAnswersRequest request) {
 
         // Get Student (User)
         User student = userRepository.findById(studentId)
@@ -135,13 +128,13 @@ public class StudentExamServiceImpl implements StudentExamService {
             throw new ExamAlreadyPublishedCompletedException("Exam already completed");
         }
         //Time validation
-        LocalDateTime now =LocalDateTime.now();
-        Exam exam =studentExam.getExam();
+        LocalDateTime now = LocalDateTime.now();
+        Exam exam = studentExam.getExam();
 
 
-        if(exam.getExamStatus()==ExamStatus.ENDED ||now.isAfter(exam.getEndTime())){
+        if (exam.getExamStatus() == ExamStatus.ENDED || now.isAfter(exam.getEndTime())) {
             //Auto mark exam as completed
-           studentExam.setStudentExamStatus(ATTENDED);
+            studentExam.setStudentExamStatus(ATTENDED);
             studentExamRepository.save(studentExam);
             throw new ExamTimeOverException("Exam has ended .Auto-completed");
         }
@@ -166,42 +159,43 @@ public class StudentExamServiceImpl implements StudentExamService {
         StudentAnswer saved = studentAnswerRepository.save(answerEntity);
         studentExam.setStudentExamStatus(PENDING);
 
-        return new StudentDtos.AnswerDto(saved.getQuestion().getQuestionId(), saved.getSelected_option());
+        return new StudentDtos.AnswerDto(saved.getStudentExam().getExam().getExamId(), saved.getStudentExam().getStudentExamId(), saved.getQuestion().getQuestionId(), saved.getSelected_option());
     }
-  //student complete the exam
-  @Transactional
-    public ResultDtos.StudentExamSummary finishExam(Long studentId , ExamDtos.Request req) {
-        StudentExam se = studentExamRepository.findByExamIdAndStudentId(req.examId(),studentId)
+
+    //student complete the exam
+    @Transactional
+    public ResultDtos.StudentExamSummary finishExam(Long studentId, ExamDtos.Request req) {
+        StudentExam se = studentExamRepository.findByExamIdAndStudentId(req.examId(), studentId)
                 .orElseThrow(() -> new EntryNotfoundException("StudentExam not found"));
 
-        Exam exam =se.getExam();
+        Exam exam = se.getExam();
 
-     //check if exam is ended based on current time
-      boolean examEnded =exam.getExamStatus()== ExamStatus.ENDED || req.isTimerEnd();
-      if (examEnded) {
-          // Auto-complete student exam
-          se.setStudentExamStatus(ATTENDED);
-          studentExamRepository.save(se);
+        //check if exam is ended based on current time
+        boolean examEnded = exam.getExamStatus() == ExamStatus.ENDED || req.isTimerEnd();
+        if (examEnded) {
+            // Auto-complete student exam
+            se.setStudentExamStatus(ATTENDED);
+            studentExamRepository.save(se);
 
-          long totalQuestions = exam.getQuestions().size();
-          long answeredQuestions = se.getStudentAnswers().size();
-          long correctCount = studentAnswerRepository.countCorrectAnswers(se);
-          double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
+            long totalQuestions = exam.getQuestions().size();
+            long answeredQuestions = se.getStudentAnswers().size();
+            long correctCount = studentAnswerRepository.countCorrectAnswers(se);
+            double percentage = totalQuestions == 0 ? 0 : (correctCount * 100.0 / totalQuestions);
 
-          return new ResultDtos.StudentExamSummary(
-                  se.getStudentExamId(),
-                  exam.getExamId(),
-                  se.getStudentExamStatus(),
-                  totalQuestions,
-                  correctCount,
-                  percentage
-          );
-      }
+            return new ResultDtos.StudentExamSummary(
+                    se.getStudentExamId(),
+                    exam.getExamId(),
+                    se.getStudentExamStatus(),
+                    totalQuestions,
+                    correctCount,
+                    percentage
+            );
+        }
 
         long totalQuestions = se.getExam().getQuestions().size();
-        long answeredQuestion =se.getStudentAnswers().size();
+        long answeredQuestion = se.getStudentAnswers().size();
 
-        if(answeredQuestion<totalQuestions){
+        if (answeredQuestion < totalQuestions) {
             throw new IncompleteExamException("student has not answered all questions");
         }
         long correctCount = studentAnswerRepository.countCorrectAnswers(se);
@@ -224,13 +218,14 @@ public class StudentExamServiceImpl implements StudentExamService {
     public ResultDtos.StudentResultRow getStudentResult(Long studentExamId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
                 .orElseThrow(() -> new EntryNotfoundException("Result  not found"));
-  return getResult(se);
+        return getResult(se);
     }
-     public ResultDtos.StudentResultRow getOwnResult(Long studentExamId, Long userId){
+
+    public ResultDtos.StudentResultRow getOwnResult(Long studentExamId, Long userId) {
         StudentExam se = studentExamRepository.findById(studentExamId)
                 .orElseThrow(() -> new EntryNotfoundException("Result  not found"));
 
-        if(!se.getStudent().getUserId().equals(userId)){
+        if (!se.getStudent().getUserId().equals(userId)) {
             throw new UnauthorizedAccessException("You are not allowed to view another student's result");
         }
         return getResult(se);
@@ -266,13 +261,13 @@ public class StudentExamServiceImpl implements StudentExamService {
                 correctCount++;
             }
             String status;
-            if(ans==null) {
+            if (ans == null) {
                 status = "Unanswered";
             } else if (correct) {
-                status="Correct";
+                status = "Correct";
 
-            }else {
-                status="Wrong";
+            } else {
+                status = "Wrong";
             }
 
             questionResults.add(new ResultDtos.QuestionResult(
@@ -293,6 +288,7 @@ public class StudentExamServiceImpl implements StudentExamService {
         String passFail = percentage >= 60 ? "Passed" : "Failed";
 
         return new ResultDtos.StudentResultRow(
+                se.getExam().getTitle(),
                 se.getStudentExamId(),
                 se.getStudent().getUserId(),
                 se.getStudent().getName(),
@@ -313,34 +309,61 @@ public class StudentExamServiceImpl implements StudentExamService {
     public Page<StudentDtos.StudentExamList> StudentExamLists(
             Long studentId,
             StudentDtos.StudentRequestExamList request
-    ) {  //Get all published exams
-        List<Exam>publishedExams=examRepository.findByExamStatus(ExamStatus.PUBLISHED);
+    ) {
+        // Validate student exists
+        userRepository.findById(studentId)
+                .orElseThrow(() -> new EntryNotfoundException("Student not found with id " + studentId));
 
-        User student =userRepository.findById(studentId).orElseThrow(()->new EntryNotfoundException("student not found with id"+studentId));
-
-        for(Exam exam:publishedExams) {
-            boolean isEnded = exam.getExamStatus() == ExamStatus.ENDED || LocalDateTime.now().isAfter(exam.getEndTime());
-
-            if (!isEnded) {
-                boolean exists = studentExamRepository.existsByStudentAndExam(studentId, exam.getExamId());
-                if (!exists) {
-                    StudentExam se = new StudentExam();
-                    se.setStudent(student);
-                    se.setExam(exam);
-                    se.setStudentExamStatus(StudentExamStatus.NEW);
-                    studentExamRepository.save(se);
-                }
-            }
-        }Pageable pageable = PageRequest.of(request.page(), request.size());
-        Page<StudentExam> exams;
-
+        // Create pageable object
+        Pageable pageable = PageRequest.of(request.page(), request.size());
+        Page<Exam> exams;
         if (request.search() == null || request.search().isBlank()) {
-            exams = studentExamRepository.findByStudent_Id(studentId, pageable);
+            exams = examRepository.findNotDraftExams(
+                    pageable
+            );
         } else {
-            exams= studentExamRepository.findByStudentIdAndSearch(studentId, request.search(), pageable);
+            String searchTerm = request.search().trim();
+            exams = examRepository.findNotDraftExamsAndSearch(
+                    searchTerm,
+                    pageable
+            );
         }
 
-        return exams.map(this::toStudentResponse);
+        return exams.map(e->toStudentResponse(e,studentId));
+    }
+
+    private StudentDtos.StudentExamList toStudentResponse(Exam e, Long studentId ) {
+
+        long durationMinutes = Duration.between(e.getStartTime(), e.getEndTime()).toMinutes();
+        long hours = durationMinutes / 60;
+        long minutes = durationMinutes % 60;
+        String duration = String.format("%02dh %02dmin", hours, minutes);
+        Optional<StudentExam> se = studentExamRepository.findByExamIdAndStudentId(e.getExamId(),studentId);
+        String status;
+
+         Long studentExamId=se.map(StudentExam::getStudentExamId).orElse(null);
+
+        //check if exam is already ended based on current time
+        if (e.getExamStatus() == ExamStatus.ENDED || LocalDateTime.now().isAfter(e.getEndTime())) {
+            status = "ENDED";
+        }  else {
+            status = se.map(s -> switch (s.getStudentExamStatus()) {
+                case PENDING -> "PENDING";
+                case ATTENDED -> "ATTENDED";
+                default -> "NEW";
+            }).orElse("NEW");
+        }
+
+
+        return new StudentDtos.StudentExamList(
+
+                e.getExamId(),
+                studentExamId,
+                e.getTitle(),
+                e.getStartTime(),
+                duration,
+                status
+        );
     }
 
     private String gradeFor(double pct) {
@@ -349,28 +372,6 @@ public class StudentExamServiceImpl implements StudentExamService {
         if (pct >= 55) return "C";
         if (pct >= 35) return "D";
         return "F";
-    }
-
-    private StudentDtos.StudentExamList toStudentResponse(StudentExam se) {
-        Exam e = se.getExam();
-        long durationMinutes = Duration.between(e.getStartTime(), e.getEndTime()).toMinutes();
-        String status;
-        //check if exam is already ended based on current time
-        if(e.getExamStatus() == ExamStatus.ENDED || LocalDateTime.now().isAfter(e.getEndTime())){
-            status="Ended";
-        } else
-         status = switch (se.getStudentExamStatus()) {
-            case PENDING -> "pending";
-            case ATTENDED -> "Attended";
-            default -> "New";
-        };
-
-        return new StudentDtos.StudentExamList(
-                e.getTitle(),
-                e.getStartTime(),
-                durationMinutes,
-                status
-        );
     }
 
 

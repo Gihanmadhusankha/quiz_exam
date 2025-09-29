@@ -3,15 +3,19 @@ package com.quiz.quiz_exam.service.Impl;
 import com.quiz.quiz_exam.dto.ExamDtos;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.Question;
+import com.quiz.quiz_exam.entity.StudentExam;
+import com.quiz.quiz_exam.entity.User;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import com.quiz.quiz_exam.enums.RecordStatus;
-import com.quiz.quiz_exam.exception.EntryNotfoundException;
-import com.quiz.quiz_exam.exception.ExamAlreadyPublishedCompletedException;
-import com.quiz.quiz_exam.exception.InvalidTimeException;
-import com.quiz.quiz_exam.exception.UnauthorizedAccessException;
+import com.quiz.quiz_exam.enums.StudentExamStatus;
+import com.quiz.quiz_exam.enums.UserRole;
+import com.quiz.quiz_exam.exception.*;
 import com.quiz.quiz_exam.repository.ExamRepository;
 import com.quiz.quiz_exam.repository.QuestionRepository;
+import com.quiz.quiz_exam.repository.StudentExamRepository;
+import com.quiz.quiz_exam.repository.UserRepository;
 import com.quiz.quiz_exam.service.ExamService;
+import com.quiz.quiz_exam.util.DateTimeUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +27,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
     private final ExamRepository examRepository;
     private final QuestionRepository questionRepository;
+    private final UserRepository userRepository;
+    private final StudentExamRepository studentExamRepository;
+    private final String frontendZone = "Asia/Colombo";
 
 
 
@@ -140,30 +151,43 @@ public class ExamServiceImpl implements ExamService {
             }
             return toResponse(examRepository.save(exam));
         }
-         throw new IllegalArgumentException("Invalid request type");
-
+        throw new IllegalArgumentException("Invalid request type");
     }
 
-    private void validExamDatetime(ExamDtos.CreateExamRequest req){
-        LocalDateTime today= LocalDate.now().atStartOfDay();
-        LocalDateTime now =LocalDateTime.now();
-        //validate date
-        if (req.date().isBefore(LocalDate.now().atStartOfDay())) {
+
+    private void validExamDatetime(ExamDtos.CreateExamRequest req) {
+        // Current time in UTC
+        LocalDateTime nowUtc = LocalDateTime.now(ZoneId.of("UTC"));
+        LocalDate todayUtc = nowUtc.toLocalDate();
+
+        // Convert request fields from frontend zone to UTC
+        LocalDateTime reqDateUtc = DateTimeUtil.toUtc(req.date(), frontendZone);
+        LocalDateTime reqStartUtc = DateTimeUtil.toUtc(req.startedTime(), frontendZone);
+        LocalDateTime reqEndUtc = DateTimeUtil.toUtc(req.endTime(), frontendZone);
+
+        // Validate exam date
+        if (reqDateUtc.isBefore(LocalDate.now(ZoneId.of("UTC")).atStartOfDay())) {
             throw new InvalidTimeException("Exam date cannot be in the past");
         }
+
         // Validate start time is in the future
-        if (req.startedTime().isBefore(now)) {
+        if (reqStartUtc.isBefore(nowUtc)) {
             throw new InvalidTimeException("Start time must be in the future");
         }
 
-        //validate start and end times
-        if (!req.startedTime().isBefore(req.endTime())) {
-            throw new InvalidTimeException("start time must be before end time");
+        // Validate start and end times
+        if (!reqStartUtc.isBefore(reqEndUtc)) {
+            throw new InvalidTimeException("Start time must be before end time");
         }
-        if(req.date().isEqual(today)&& req.startedTime().isBefore(now)){
+
+        // Extra check for same day case
+        if (reqDateUtc.toLocalDate().isEqual(todayUtc) && reqStartUtc.isBefore(nowUtc)) {
             throw new InvalidTimeException("Start time must be in the future");
         }
     }
+
+
+
 
 
     @Override
@@ -221,17 +245,18 @@ public class ExamServiceImpl implements ExamService {
 
         if(e.getExamStatus()==ExamStatus.DRAFT) {
             e.setExamStatus(ExamStatus.PUBLISHED);
+//
         }
         return toResponse(examRepository.save(e));
 
 
     }
-
-
-
     private ExamDtos.ExamResponse toResponse(Exam e) {
-
-        return new ExamDtos.ExamResponse(e.getTitle(),e.getLastUpdated(),e.getExamStatus());
+        if ( LocalDateTime.now().isAfter(e.getEndTime())) {
+            e.setExamStatus(ExamStatus.ENDED);
+            examRepository.save(e);
+        }
+        return new ExamDtos.ExamResponse(e.getExamId(),e.getTitle(),e.getLastUpdated(),e.getExamStatus());
     }
 
 }

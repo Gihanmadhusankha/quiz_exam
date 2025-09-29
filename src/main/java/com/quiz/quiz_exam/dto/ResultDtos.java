@@ -18,6 +18,7 @@ public class ResultDtos {
     ) {}
 
     public record StudentResultRow(
+            String title,
             Long studentExamId,
             Long studentId,
             String studentName,

@@ -26,4 +26,8 @@ public interface StudentAnswerRepository extends JpaRepository<StudentAnswer,Lon
     @Query("SELECT sa FROM StudentAnswer sa JOIN  sa.studentExam se WHERE se.studentExamId = :studentExamId")
     List<StudentAnswer> findByStudentExamId(@Param("studentExamId") Long studentExamId);
 
+
+    @Query("SELECT sa.question.questionId FROM StudentAnswer sa WHERE sa.studentExam.studentExamId=:studentExamId  ORDER BY sa.studentAnswerId DESC LIMIT 1")
+    Optional<Long>findLastAnsweredQuestionId(@Param("studentExamId")Long studentExamId);
+
 }

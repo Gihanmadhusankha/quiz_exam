@@ -24,6 +24,8 @@ public class StudentDtos {
 
     // Student’s answer for one question
     public record AnswerDto(
+            Long examId,
+            Long studentExamId,
             @NotNull Long questionId,
             @NotBlank String selectedOption
 
@@ -39,17 +41,22 @@ public class StudentDtos {
 
 
     public record StartExamResponse(
+            Long examId,
+
             Long studentExamId,
             String title,
-          //  String duration ,
-            List<QuestionDtos.Question>questions
+
+            LocalDateTime endTime,
+
+            List<QuestionDtos.Question>questions,
+            Long lastAnsweredQuestionId
 
 
-    ){
-
-    }
+    ){}
     public record StudentInfo(
             Long id,
+
+            Long studentExamId,
             String name,
             String status
 
@@ -58,14 +65,17 @@ public class StudentDtos {
 
     public record StudentStatusRecord(
             String studentName,
-            String status //PENDING,ATTENDED,COMPLETED
+            String status
 
     ) {
     }
     public record StudentExamList(
+            Long examId,
+
+            Long studentExamId,
             String title,
             LocalDateTime StartTime,
-            long ExamDuration,
+            String ExamDuration,
             String status
 
 

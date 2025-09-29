@@ -56,6 +56,7 @@ public class ExamMonitorServiceImpl implements ExamMonitorService {
         dto.setStudents(studentExams.stream()
                 .map(se -> new StudentDtos.StudentInfo(
                         se.getStudent().getUserId(),
+                        se.getStudentExamId(),
                         se.getStudent().getName(),
                         se.getStudentExamStatus().toString()
                 )).toList()

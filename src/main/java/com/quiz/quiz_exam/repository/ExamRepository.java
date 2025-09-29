@@ -1,7 +1,7 @@
 package com.quiz.quiz_exam.repository;
 
 import com.quiz.quiz_exam.entity.Exam;
-import com.quiz.quiz_exam.entity.User;
+import com.quiz.quiz_exam.entity.StudentExam;
 import com.quiz.quiz_exam.enums.ExamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,12 +30,22 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                                         @Param("search") String search,
                                         Pageable pageable);
 
-
     @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId")
     List<Exam> findByTeachId(@Param("teacherId") Long teacherId);
 
-    @Query("SELECT e FROM Exam e WHERE e.examStatus = :status")
-    List<Exam> findByExamStatus(@Param("status") ExamStatus status);
+
     @Query("SELECT e FROM Exam e WHERE e.examId = :examId")
     Optional<Exam> findByExamId(@Param("examId")long examId);
+
+
+
+    List<Exam> findByExamStatusIn(List<ExamStatus> statuses);
+    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'  AND  e.title LIKE %:search% ORDER BY e.date DESC")
+    Page<Exam >findNotDraftExamsAndSearch(
+            @Param("search") String search,
+            Pageable pageable);
+
+    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'   ORDER BY e.date DESC")
+    Page<Exam >findNotDraftExams(
+            Pageable pageable);
 }

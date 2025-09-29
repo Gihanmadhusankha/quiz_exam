@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+
 public class ExamController {
 
     private final ExamService examService;
@@ -49,7 +49,7 @@ public class ExamController {
         );
 
     }
-    @PostMapping("/load")
+    @PostMapping("/loadExam")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<StandResponseDto> loadExam(
             @RequestHeader("Authorization")String authHeader,

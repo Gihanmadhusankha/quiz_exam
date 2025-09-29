@@ -8,7 +8,7 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name="student_exam")
+@Table(name="student_exam",uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exam_id"}))
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
