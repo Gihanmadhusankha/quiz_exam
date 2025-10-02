@@ -7,34 +7,11 @@ import java.util.List;
 
 public class ExamDtos {
     public record QuestionDto(Long questionId, String questionText, String optionA, String optionB, String optionC, String optionD, String correctOption) { }
-    public record CreateExamRequest(@NotBlank String title, @NotNull LocalDateTime date, @NotNull LocalDateTime startedTime, @NotNull LocalDateTime endTime, List<QuestionDtos.CreateQuestionRequest> questions,Long examId, boolean isNew,boolean isUpdate,boolean isRemove) { }
+    public record CreateExamRequest(@NotBlank String title,  LocalDateTime date,  LocalDateTime startedTime,  LocalDateTime endTime, List<QuestionDtos.CreateQuestionRequest> questions,Long examId, boolean isNew,boolean isUpdate,boolean isRemove) { }
     public record ExamResponse(long examId,String title ,LocalDateTime lastUpdated,ExamStatus status) { }
-    public record TeacherExamList(
-
-            int page,
-            int size,
-            String search
-    ){}
-    public record Request(
-            Long examId,
-            boolean isTimerEnd
-
-    ){}
-    public record loadExamRequest(
-            @NotNull Long examId
-
-
-
-    ) { }
-    public record loadExamResponse(
-            Long examId,
-            String title,
-            LocalDateTime date,
-            LocalDateTime startedTime,
-            LocalDateTime endTime,
-            List<QuestionDto> questions
-
-
-    ){}
+    public record TeacherExamList(int page, int size, String search){}
+    public record Request(Long examId, boolean isTimerEnd){}
+    public record loadExamRequest(@NotNull Long examId, boolean isTimerEnd){}
+    public record loadExamResponse(Long examId, String title, LocalDateTime date, LocalDateTime startedTime, LocalDateTime endTime, List<QuestionDto> questions){}
 
 }

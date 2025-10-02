@@ -31,13 +31,16 @@ public class Exam {
     @Column(name="title", nullable = false)
     private String title;
 
-    @Column(name = "exam_date", nullable = false)
+    @Column(name = "exam_date" )
     private LocalDateTime date;
 
-    @Column(name = "exam_start_time", nullable = false)
+    @Column(name="created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "exam_start_time")
     private LocalDateTime startTime;
 
-    @Column(name = "exam_end_time", nullable = false)
+    @Column(name = "exam_end_time")
     private LocalDateTime endTime;
 
     @Column(name="exam_status", nullable = false)

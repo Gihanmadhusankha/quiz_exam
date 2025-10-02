@@ -136,7 +136,7 @@ public class StudentExamServiceImpl implements StudentExamService {
             //Auto mark exam as completed
             studentExam.setStudentExamStatus(ATTENDED);
             studentExamRepository.save(studentExam);
-            throw new ExamTimeOverException("Exam has ended .Auto-completed");
+            throw new ExamTimeOverException("EXAM_HAS_ENDED_AUTOCOMPLETED");
         }
 
         Question question = questionRepository.findById(request.questionId())
@@ -273,6 +273,7 @@ public class StudentExamServiceImpl implements StudentExamService {
             questionResults.add(new ResultDtos.QuestionResult(
                     q.getQuestionId(),
                     q.getQuestionText(),
+                    getCorrectAnswerText(q),
                     correct,
                     status
                     //correct ? "Correct" : "Wrong"
@@ -302,6 +303,21 @@ public class StudentExamServiceImpl implements StudentExamService {
                 passFail,
                 questionResults
         );
+    }
+    private String getCorrectAnswerText(Question q){
+        switch(q.getCorrectOption()){
+            case "A":
+                return q.getOptionA();
+            case "B":
+                return q.getOptionB();
+            case "C":
+                return q.getOptionC();
+            case "D":
+                return q.getOptionD();
+            default:
+                return null;
+
+        }
     }
 
     @Transactional

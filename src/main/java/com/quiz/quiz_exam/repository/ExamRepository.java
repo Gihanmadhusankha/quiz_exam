@@ -19,13 +19,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
                                   @Param("search") String search,
                                   Pageable pageable);
 
-    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId ORDER BY e.date DESC")
+    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId ORDER BY e.createdAt DESC")
     Page<Exam> findByTeacherId(@Param("teacherId") Long teacherId,
                                Pageable pageable);
 
 
 
-    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId AND e.title LIKE %:search% ORDER BY e.date DESC")
+    @Query("SELECT e FROM Exam e WHERE e.teacherId = :teacherId AND e.title LIKE %:search% ORDER BY e.createdAt DESC")
     Page<Exam> findByTeacherIdAndSearch(@Param("teacherId") Long teacherId,
                                         @Param("search") String search,
                                         Pageable pageable);
@@ -40,12 +40,12 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
 
     List<Exam> findByExamStatusIn(List<ExamStatus> statuses);
-    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'  AND  e.title LIKE %:search% ORDER BY e.date DESC")
+    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'  AND  e.title LIKE %:search% ORDER BY e.createdAt DESC")
     Page<Exam >findNotDraftExamsAndSearch(
             @Param("search") String search,
             Pageable pageable);
 
-    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'   ORDER BY e.date DESC")
+    @Query("SELECT e FROM Exam e WHERE  e.examStatus <> 'DRAFT'   ORDER BY e.createdAt DESC")
     Page<Exam >findNotDraftExams(
             Pageable pageable);
 }

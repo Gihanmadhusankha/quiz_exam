@@ -1,7 +1,9 @@
 package com.quiz.quiz_exam.controller;
 
 import com.quiz.quiz_exam.dto.AuthDtos;
-import com.quiz.quiz_exam.service.Impl.AuthService;
+import com.quiz.quiz_exam.security.JwtUtil;
+import com.quiz.quiz_exam.service.AuthService;
+
 import com.quiz.quiz_exam.util.StandResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 public class AuthController {
     private final AuthService authService;
+    private final JwtUtil jwtUtil;
 
 
     @PostMapping("/register")
@@ -34,6 +37,19 @@ public class AuthController {
                 new StandResponseDto(200,"user Login Successfully",authService.login(req)
                 ),
                 HttpStatus.OK
+        );
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<StandResponseDto>logOut(
+            @RequestHeader("Authorization")String authHeader
+    ){
+        String token=authHeader.substring(7);
+        Long userId=jwtUtil.extractUserId(token);
+        authService.logOut(userId);
+        return new  ResponseEntity<>(
+                new StandResponseDto(
+                        200,"User Logout Successfully ",null
+                ), HttpStatus.OK
         );
     }
 }

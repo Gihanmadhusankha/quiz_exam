@@ -7,6 +7,7 @@ import com.quiz.quiz_exam.enums.UserRole;
 import com.quiz.quiz_exam.exception.EntryNotfoundException;
 import com.quiz.quiz_exam.repository.UserRepository;
 import com.quiz.quiz_exam.security.JwtUtil;
+import com.quiz.quiz_exam.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements com.quiz.quiz_exam.service.Impl.AuthService {
+public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final JwtUtil jwtUtil;
@@ -33,6 +34,13 @@ public class AuthServiceImpl implements com.quiz.quiz_exam.service.Impl.AuthServ
         if (!encoder.matches(req.password(), u.getPassword())) throw new EntryNotfoundException("Invalid password");
         return toResponse(u);
     }
+
+    @Override
+    public void logOut(Long userId) {
+        User user=userRepository.findById(userId).orElseThrow(()->new EntryNotfoundException("User not found"));
+        user.setStatus(RecordStatus.OFFLINE);
+    }
+
     //convert request->User
     private User toUser(AuthDtos.RegisterRequest req){
         return User.builder()

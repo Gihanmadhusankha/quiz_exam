@@ -14,32 +14,17 @@ import java.util.List;
 @Builder
 public class DashboardDto {
 
-    public record ProgressOverTime(
-            String examTitle,
-            LocalDateTime examDate,
-            double averageScore,
-            Long attendedCount
-    ) {}
+    public record ProgressOverTime(String examTitle, LocalDateTime examDate, double averageScore, Long attendedCount) {
+    }
 
 
-    public record GradeDistribution(
-            String grade,   // A, B, C, D, F
-            Long count,
-            double percent
-    ) {}
+    public record GradeDistribution(String grade, Long count, double percent) {
+    }
 
-    public record studentAverage(
-            Long examId,
-            String studentName,
-            Double averageScore
-    ) {
+    public record studentAverage(Long examId, String studentName, Double averageScore) {
 
     }
-    public record DashboardResponse(
-            List<ProgressOverTime> progressOverTime,
-            List<GradeDistribution> gradeDistribution,
-            List<studentAverage> topStudents,
-            List<studentAverage> lowStudents
-    ) {}
 
+    public record DashboardResponse(List<ProgressOverTime> progressOverTime, List<GradeDistribution> gradeDistribution,
+                                    List<studentAverage> topStudents, List<studentAverage> lowStudents) {}
 }

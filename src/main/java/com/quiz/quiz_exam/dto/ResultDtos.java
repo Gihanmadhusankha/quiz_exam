@@ -45,6 +45,7 @@ public class ResultDtos {
     public record QuestionResult(
             Long questionId,
             String tittle,
+            String correctAnswer,
             boolean correct,
             String verdictText
     ){}

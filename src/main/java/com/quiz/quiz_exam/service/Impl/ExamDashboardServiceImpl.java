@@ -4,6 +4,7 @@ import com.quiz.quiz_exam.dto.DashboardDto;
 import com.quiz.quiz_exam.entity.StudentAnswer;
 import com.quiz.quiz_exam.entity.StudentExam;
 import com.quiz.quiz_exam.entity.User;
+import com.quiz.quiz_exam.enums.StudentExamStatus;
 import com.quiz.quiz_exam.repository.StudentExamRepository;
 import com.quiz.quiz_exam.repository.UserRepository;
 import com.quiz.quiz_exam.service.ExamDashboardService;
@@ -83,14 +84,16 @@ public class ExamDashboardServiceImpl implements ExamDashboardService {
     }
 
     private List<DashboardDto.studentAverage> getTopStudents(List<StudentExam> studentExams) {
-        return getStudentAverages(studentExams).stream()
+        List<StudentExam> completed=studentExamRepository.findByStatus(StudentExamStatus.ATTENDED);
+        return getStudentAverages(completed).stream()
                 .sorted(Comparator.comparingDouble(DashboardDto.studentAverage::averageScore).reversed())
                 .limit(5)
                 .collect(Collectors.toList());
     }
 
     private List<DashboardDto.studentAverage> getLowStudents(List<StudentExam> studentExams) {
-        return getStudentAverages(studentExams).stream()
+        List<StudentExam> completed=studentExamRepository.findByStatus(StudentExamStatus.ATTENDED);
+        return getStudentAverages(completed).stream()
                 .sorted(Comparator.comparingDouble(DashboardDto.studentAverage::averageScore))
                 .limit(5)
                 .collect(Collectors.toList());

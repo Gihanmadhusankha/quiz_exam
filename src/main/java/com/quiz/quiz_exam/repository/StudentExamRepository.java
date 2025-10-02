@@ -3,6 +3,7 @@ package com.quiz.quiz_exam.repository;
 import com.quiz.quiz_exam.entity.Exam;
 import com.quiz.quiz_exam.entity.StudentExam;
 import com.quiz.quiz_exam.enums.ExamStatus;
+import com.quiz.quiz_exam.enums.StudentExamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,7 +41,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
 
     // Find exams by studentId with pagination
-    @Query("SELECT se FROM StudentExam se JOIN se.student   s JOIN se.exam e  WHERE s.userId = :studentId ORDER BY e.date DESC")
+    @Query("SELECT se FROM StudentExam se JOIN se.student   s JOIN se.exam e  WHERE s.userId = :studentId ORDER BY e.createdAt DESC")
    Page< StudentExam> findByStudent_Id(@Param("studentId") Long studentId, Pageable pageable);
 
 
@@ -60,4 +61,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Query("SELECT se FROM StudentExam se JOIN se.student   s JOIN se.exam e  WHERE s.userId = :studentId AND e.examId=:examId")
     Optional<StudentExam> findByStudentAndExam(Long studentId, Long examId);
+    @Query("SELECT se FROM StudentExam se JOIN se.exam e  WHERE se.studentExamStatus ='ATTENDED'")
+    List<StudentExam> findByStatus(StudentExamStatus studentExamStatus);
 }

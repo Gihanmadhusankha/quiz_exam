@@ -15,9 +15,6 @@ public class StudentDtos {
 
     public record StartExamRequest(
             @NotNull Long examId
-
-
-
     ) { }
 
 
@@ -28,8 +25,6 @@ public class StudentDtos {
             Long studentExamId,
             @NotNull Long questionId,
             @NotBlank String selectedOption
-
-
     ) { }
 
     // When submitting one answer → status = ATTENDED
@@ -50,8 +45,6 @@ public class StudentDtos {
 
             List<QuestionDtos.Question>questions,
             Long lastAnsweredQuestionId
-
-
     ){}
     public record StudentInfo(
             Long id,
@@ -59,16 +52,12 @@ public class StudentDtos {
             Long studentExamId,
             String name,
             String status
-
-
     ){}
 
     public record StudentStatusRecord(
             String studentName,
             String status
-
-    ) {
-    }
+    ) {}
     public record StudentExamList(
             Long examId,
 
@@ -77,9 +66,6 @@ public class StudentDtos {
             LocalDateTime StartTime,
             String ExamDuration,
             String status
-
-
-
     ){}
     public record StudentRequestExamList(
 

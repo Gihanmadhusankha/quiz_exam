@@ -45,15 +45,21 @@ public class ExamServiceImpl implements ExamService {
 
     @Transactional
     public ExamDtos.ExamResponse saveUpdateDeleteExam(Long teacherId, ExamDtos.CreateExamRequest req ) {
-        if (req.isNew() || req.isUpdate()) {
+        if ((req.isNew() || req.isUpdate())
+                && req.date() != null
+                && req.startedTime() != null
+                && req.endTime() != null) {
             validExamDatetime(req);
         }
+
+
 
         if (req.isNew()) {
             Exam exam = Exam.builder()
                     .teacherId(teacherId)
                     .title(req.title())
                     .date(req.date())
+                    .createdAt(LocalDateTime.now())
                     .startTime(req.startedTime())
                     .endTime(req.endTime())
                     .examStatus(ExamStatus.DRAFT)
@@ -156,15 +162,19 @@ public class ExamServiceImpl implements ExamService {
 
 
     private void validExamDatetime(ExamDtos.CreateExamRequest req) {
+        if (req.startedTime() ==null && req.endTime() == null && req.date()==null) return;
         // Current time in UTC
         LocalDateTime nowUtc = LocalDateTime.now(ZoneId.of("UTC"));
         LocalDate todayUtc = nowUtc.toLocalDate();
 
         // Convert request fields from frontend zone to UTC
         LocalDateTime reqDateUtc = DateTimeUtil.toUtc(req.date(), frontendZone);
+        assert req.startedTime() != null;
         LocalDateTime reqStartUtc = DateTimeUtil.toUtc(req.startedTime(), frontendZone);
         LocalDateTime reqEndUtc = DateTimeUtil.toUtc(req.endTime(), frontendZone);
-
+        if (reqDateUtc == null || reqStartUtc == null || reqEndUtc == null) {
+            return; // Skip if conversion fails
+        }
         // Validate exam date
         if (reqDateUtc.isBefore(LocalDate.now(ZoneId.of("UTC")).atStartOfDay())) {
             throw new InvalidTimeException("Exam date cannot be in the past");
@@ -184,6 +194,7 @@ public class ExamServiceImpl implements ExamService {
         if (reqDateUtc.toLocalDate().isEqual(todayUtc) && reqStartUtc.isBefore(nowUtc)) {
             throw new InvalidTimeException("Start time must be in the future");
         }
+
     }
 
 
